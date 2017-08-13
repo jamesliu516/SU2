@@ -10392,7 +10392,7 @@ void CFEM_DG_NSSolver::Volume_Residual(CConfig             *config,
        of elements. */
     config->GEMM_Tick(&tick);
     DenseMatrixProduct(nInt*(nDim+1), NPad, nDOFs, matBasisInt, solDOFs, solAndGradInt);
-    config->GEMM_Tock(tick, "Volume_Residual1", nInt*(nDim+1), nVar, nDOFs);
+    config->GEMM_Tock(tick, "Volume_Residual1", nInt*(nDim+1), NPad, nDOFs);
 
     /*------------------------------------------------------------------------*/
     /*--- Step 2: Compute the total fluxes (inviscid fluxes minus the      ---*/
@@ -10777,7 +10777,7 @@ void CFEM_DG_NSSolver::Volume_Residual(CConfig             *config,
        Use solDOFs as a temporary storage for the matrix product. */
     config->GEMM_Tick(&tick);
     DenseMatrixProduct(nDOFs, NPad, nInt*nDim, matDerBasisIntTrans, fluxes, solDOFs);
-    config->GEMM_Tock(tick, "Volume_Residual2", nDOFs, nVar, nInt*nDim);
+    config->GEMM_Tock(tick, "Volume_Residual2", nDOFs, NPad, nInt*nDim);
 
     /* Add the contribution from the source terms, if needed. Use solAndGradInt
        as temporary storage for the matrix product. */
@@ -10786,7 +10786,7 @@ void CFEM_DG_NSSolver::Volume_Residual(CConfig             *config,
       /* Call the general function to carry out the matrix product. */
       config->GEMM_Tick(&tick);
       DenseMatrixProduct(nDOFs, NPad, nInt, matBasisIntTrans, sources, solAndGradInt);
-      config->GEMM_Tock(tick, "Volume_Residual3", nDOFs, nVar, nInt);
+      config->GEMM_Tock(tick, "Volume_Residual3", nDOFs, NPad, nInt);
 
       /* Add the residuals due to source terms to the volume residuals */
       for(unsigned short i=0; i<(nDOFs*NPad); ++i)
