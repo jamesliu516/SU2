@@ -13315,46 +13315,64 @@ protected:
   /*!
    * \brief Function, which computes the inviscid fluxes in face points.
    * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
    * \param[in]  nPoints     - Number of points for which the flux must be computed.
-   * \param[in]  normalsFace - The normals in the points.
+   * \param[in]  normalsFace - The normals in the points for the fused faces.
    * \param[in]  solL        - Solution in the left state of the points.
    * \param[in]  solR        - Solution in the right state of the points.
    * \param[out] fluxes      - Inviscid fluxes in the points.
    * \param[in]  numerics    - Object, which contains the Riemann solver.
    */
-  void ComputeInviscidFluxesFace(CConfig             *config,
-                                 const unsigned long nPoints,
-                                 const su2double     *normalsFace,
-                                 const su2double     *solL,
-                                 const su2double     *solR,
-                                 su2double           *fluxes,
-                                 CNumerics           *numerics);
+  void ComputeInviscidFluxesFace(CConfig              *config,
+                                 const unsigned short nFacesFused,
+                                 const unsigned short NPad,
+                                 const unsigned long  nPoints,
+                                 const su2double      *normalsFace[],
+                                 const su2double      *solL,
+                                 const su2double      *solR,
+                                 su2double            *fluxes,
+                                 CNumerics            *numerics);
 
   /*!
    * \brief Function, which computes the inviscid fluxes in face points of
             a matching internal face.
    * \param[in]  config       - Definition of the particular problem.
-   * \param[in]  internalFace - Internal matching face for which the inviscid
-                                fluxes must be computed in the integration points.
+   * \param[in]  lBeg         - Start index in matchingInternalFaces for which
+                                the inviscid fluxes should be computed.
+   * \param[in]  lEnd         - End index (not included) in matchingInternalFaces
+                                for which the inviscid fluxes should be computed.
+   * \param[in]  NPad         - Value of the padding parameter to obtain optimal
+                                performance in the gemm computations.
    * \param[out] solIntL      - Solution in the left state of the integration points.
    * \param[out] solIntR      - Solution in the right state of the integration points.
    * \param[out] fluxes       - Inviscid fluxes in the integration points.
    * \param[in]  numerics     - Object, which contains the Riemann solver.
    */
-  void InviscidFluxesInternalMatchingFace(CConfig                       *config,
-                                          const CInternalFaceElementFEM *internalFace,
-                                          su2double                     *solIntL,
-                                          su2double                     *solIntR,
-                                          su2double                     *fluxes,
-                                          CNumerics                     *numerics);
+  void InviscidFluxesInternalMatchingFace(CConfig              *config,
+                                          const unsigned long  lBeg,
+                                          const unsigned long  lEnd,
+                                          const unsigned short NPad,
+                                          su2double            *solIntL,
+                                          su2double            *solIntR,
+                                          su2double            *fluxes,
+                                          CNumerics            *numerics);
   /*!
    * \brief Function, which computes the left state of a boundary face.
-   * \param[in]  config   - Definition of the particular problem.
-   * \param[in]  surfElem - Surface boundary element for which the left state must be computed.
-   * \param[out] solFace  - Temporary storage for the solution in the DOFs.
-   * \param[out] solIntL  - Left states in the integration points of the face.
+   * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
+   * \param[in]  surfElem    - Surface boundary elements for which the left state must be computed.
+   * \param[out] solFace     - Temporary storage for the solution in the DOFs.
+   * \param[out] solIntL     - Left states in the integration points of the face.
    */
   void LeftStatesIntegrationPointsBoundaryFace(CConfig                  *config,
+                                               const unsigned short     nFacesFused,
+                                               const unsigned short     NPad,
                                                const CSurfaceElementFEM *surfElem,
                                                su2double                *solFace,
                                                su2double                *solIntL);
@@ -13362,12 +13380,19 @@ protected:
   /*!
    * \brief Function, which computes the boundary states in the integration points
             of the boundary face by applying the inviscid wall boundary conditions.
-   * \param[in]  config   - Definition of the particular problem.
-   * \param[in]  surfElem - Surface boundary element for which the left state must be computed.
-   * \param[in]  solIntL  - Left states in the integration points of the face.
-   * \param[out] solIntR  - Right states in the integration points of the face.
+   * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
+   * \param[in]  surfElem    - Surface boundary elements for which the left state must
+                               be computed.
+   * \param[in]  solIntL     - Left states in the integration points of the face.
+   * \param[out] solIntR     - Right states in the integration points of the face.
    */
   void BoundaryStates_Euler_Wall(CConfig                  *config,
+                                 const unsigned short     nFacesFused,
+                                 const unsigned short     NPad,
                                  const CSurfaceElementFEM *surfElem,
                                  const su2double          *solIntL,
                                  su2double                *solIntR);
@@ -13375,13 +13400,19 @@ protected:
   /*!
    * \brief Function, which computes the boundary states in the integration points
             of the boundary face by applying the inlet boundary conditions.
-   * \param[in]  config     - Definition of the particular problem.
-   * \param[in]  surfElem   - Surface boundary element for which the left state must be computed.
-   * \param[in]  val_marker - Surface marker where the boundary condition is applied.
-   * \param[in]  solIntL    - Left states in the integration points of the face.
-   * \param[out] solIntR    - Right states in the integration points of the face.
+   * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
+   * \param[in]  surfElem    - Surface boundary element for which the left state must be computed.
+   * \param[in]  val_marker  - Surface marker where the boundary condition is applied.
+   * \param[in]  solIntL     - Left states in the integration points of the face.
+   * \param[out] solIntR     - Right states in the integration points of the face.
    */
   void BoundaryStates_Inlet(CConfig                  *config,
+                            const unsigned short     nFacesFused,
+                            const unsigned short     NPad,
                             const CSurfaceElementFEM *surfElem,
                             unsigned short           val_marker,
                             const su2double          *solIntL,
@@ -13390,13 +13421,19 @@ protected:
   /*!
    * \brief Function, which computes the boundary states in the integration points
             of the boundary face by applying the outlet boundary conditions.
-   * \param[in]  config     - Definition of the particular problem.
-   * \param[in]  surfElem   - Surface boundary element for which the left state must be computed.
-   * \param[in]  val_marker - Surface marker where the boundary condition is applied.
-   * \param[in]  solIntL    - Left states in the integration points of the face.
-   * \param[out] solIntR    - Right states in the integration points of the face.
+   * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
+   * \param[in]  surfElem    - Surface boundary element for which the left state must be computed.
+   * \param[in]  val_marker  - Surface marker where the boundary condition is applied.
+   * \param[in]  solIntL     - Left states in the integration points of the face.
+   * \param[out] solIntR     - Right states in the integration points of the face.
    */
   void BoundaryStates_Outlet(CConfig                  *config,
+                             const unsigned short     nFacesFused,
+                             const unsigned short     NPad,
                              const CSurfaceElementFEM *surfElem,
                              unsigned short           val_marker,
                              const su2double          *solIntL,
@@ -13405,13 +13442,19 @@ protected:
   /*!
    * \brief Function, which computes the boundary states in the integration points
             of the boundary face by applying the Riemann boundary conditions.
-   * \param[in]  config     - Definition of the particular problem.
-   * \param[in]  surfElem   - Surface boundary element for which the left state must be computed.
-   * \param[in]  val_marker - Surface marker where the boundary condition is applied.
-   * \param[in]  solIntL    - Left states in the integration points of the face.
-   * \param[out] solIntR    - Right states in the integration points of the face.
+   * \param[in]  config      - Definition of the particular problem.
+   * \param[in]  nFacesFused - Number of fused faces, i.e. the number of faces
+                               that are treated simultaneously to improve performance.
+   * \param[in]  NPad        - Value of the padding parameter to obtain optimal
+                               performance in the gemm computations.
+   * \param[in]  surfElem    - Surface boundary element for which the left state must be computed.
+   * \param[in]  val_marker  - Surface marker where the boundary condition is applied.
+   * \param[in]  solIntL     - Left states in the integration points of the face.
+   * \param[out] solIntR     - Right states in the integration points of the face.
    */
   void BoundaryStates_Riemann(CConfig                  *config,
+                              const unsigned short     nFacesFused,
+                              const unsigned short     NPad,
                               const CSurfaceElementFEM *surfElem,
                               unsigned short           val_marker,
                               const su2double          *solIntL,
@@ -13552,10 +13595,16 @@ private:
             face in an inviscid computation when the boundary conditions have
             already been applied.
    * \param[in]     config        - Definition of the particular problem.
+   * \param[in]     nFacesFused   - Number of fused faces, i.e. the number of faces
+                                    that are treated simultaneously to improve performance.
+   * \param[in]     NPad          - Value of the padding parameter to obtain optimal
+                                    performance in the gemm computations.
    * \param[in]     conv_numerics - Description of the numerical method.
    * \param[in]     surfElem      - Surface boundary element for which the
                                     contribution to the residual must be computed.
    * \param[in]     solInt0       - Solution in the integration points of side 0.
+                                    It is not const, because the array is used for
+                                    temporary storage for the residual.
    * \param[in]     solInt1       - Solution in the integration points of side 1.
    * \param[out]    fluxes        - Temporary storage for the fluxes in the
                                     integration points.
@@ -13565,10 +13614,12 @@ private:
                                     for the next boundary element.
    */
   void ResidualInviscidBoundaryFace(CConfig                  *config,
+                                    const unsigned short     nFacesFused,
+                                    const unsigned short     NPad,
                                     CNumerics                *conv_numerics,
                                     const CSurfaceElementFEM *surfElem,
-                                    const su2double          *solInt0,
-                                    const su2double          *solInt1,
+                                    su2double                *solInt0,
+                                    su2double                *solInt1,
                                     su2double                *fluxes,
                                     su2double                *resFaces,
                                     unsigned long            &indResFaces);
@@ -14043,8 +14094,11 @@ private:
                                               su2double         *work);
   /*!
    * \brief Function to compute the penalty terms in the integration
-   points of a face.
+            points of a face.
+   * \param[in]  indFaceChunk        - Index of the face in the chunk of fused faces.
    * \param[in]  nInt                - Number of integration points of the face.
+   * \param[in]  NPad                - Value of the padding parameter to obtain optimal
+                                       performance in the gemm computations.
    * \param[in]  solInt0             - Solution in the integration points of side 0.
    * \param[in]  solInt1             - Solution in the integration points of side 1.
    * \param[in]  viscosityInt0       - Viscosity in the integration points of side 0.
@@ -14060,7 +14114,9 @@ private:
                                        contain the normals.
    * \param[out] penaltyFluxes       - Penalty fluxes in the integration points.
    */
-  void PenaltyTermsFluxFace(const unsigned short nInt,
+  void PenaltyTermsFluxFace(const unsigned short indFaceChunk,
+                            const unsigned short nInt,
+                            const unsigned short NPad,
                             const su2double      *solInt0,
                             const su2double      *solInt1,
                             const su2double      *viscosityInt0,
@@ -14074,16 +14130,55 @@ private:
                                   su2double      *penaltyFluxes);
 
   /*!
+   * \brief Function, which performs the treatment of the boundary faces for
+            the Navier-Stokes equations for the most of the boundary conditions.
+   * \param[in]     config               - Definition of the particular problem.
+   * \param[in]     conv_numerics        - Description of the numerical method.
+   * \param[in]     nFacesFused          - Number of fused faces, i.e. the number of faces
+                                           that are treated simultaneously to improve performance.
+   * \param[in]     NPad                 - Value of the padding parameter to obtain optimal
+                                           performance in the gemm computations.
+   * \param[in]     Wall_HeatFlux        - The value of the prescribed heat flux.
+   * \param[in]     HeatFlux_Prescribed  - Whether or not the heat flux is prescribed by
+                                           e.g. the boundary conditions.
+   * \param[in]     surfElem             - Surface boundary elements for which the
+                                           left state must be computed.
+   * \param[in]     solIntL              - Left states in the integration points of the face.
+   * \param[in]     solIntR              - Right states in the integration points of the face.
+   * \param[out]    workArray            - Storage for the local arrays.
+   * \param[out]    resFaces             - Array to store the residuals of the face.
+   * \param[in,out] indResFaces          - Index in resFaces, where the current residual
+                                           should be stored. It is updated in the function
+                                           for the next boundary element.
+   */
+  void ViscousBoundaryFacesBCTreatment(CConfig                  *config,
+                                       CNumerics                *conv_numerics,
+                                       const unsigned short     nFacesFused,
+                                       const unsigned short     NPad,
+                                       const su2double          Wall_HeatFlux,
+                                       const bool               HeatFlux_Prescribed,
+                                       const CSurfaceElementFEM *surfElem,
+                                       const su2double          *solIntL,
+                                       const su2double          *solIntR,
+                                             su2double          *workArray,
+                                             su2double          *resFaces,
+                                             unsigned long      &indResFaces);
+
+  /*!
    * \brief Function, which computes the residual contribution from a boundary
    face in a viscous computation when the boundary conditions have
    already been applied.
    * \param[in]     config              - Definition of the particular problem.
    * \param[in]     conv_numerics       - Description of the numerical method.
-   * \param[in]     surfElem            - Surface boundary element for which the
+   * \param[in]     nFacesFused         - Number of fused faces, i.e. the number of faces
+                                          that are treated simultaneously to improve performance.
+   * \param[in]     NPad                - Value of the padding parameter to obtain optimal
+                                          performance in the gemm computations.
+   * \param[in]     surfElem            - Surface boundary elements for which the
                                           contribution to the residual must be computed.
    * \param[in]     solInt0             - Solution in the integration points of side 0.
    * \param[in]     solInt1             - Solution in the integration points of side 1.
-   * \param[out]    gradSolInt          - Array used for temporary storage.
+   * \param[out]    paramFluxes         - Array used for temporary storage.
    * \param[out]    fluxes              - Temporary storage for the fluxes in the
                                           integration points.
    * \param[in,out] viscFluxes          - On input this array contains the viscous fluxes
@@ -14100,10 +14195,12 @@ private:
    */
   void ResidualViscousBoundaryFace(CConfig                  *config,
                                    CNumerics                *conv_numerics,
+                                   const unsigned short     nFacesFused,
+                                   const unsigned short     NPad,
                                    const CSurfaceElementFEM *surfElem,
                                    const su2double          *solInt0,
                                    const su2double          *solInt1,
-                                   su2double                *gradSolInt,
+                                   su2double                *paramFluxes,
                                    su2double                *fluxes,
                                    su2double                *viscFluxes,
                                    const su2double          *viscosityInt,
@@ -14114,7 +14211,10 @@ private:
   /*!
    * \brief Function to compute the symmetrizing terms in the integration
             points of a face.
+   * \param[in]  indFaceChunk      - Index of the face in the chunk of fused faces.
    * \param[in]  nInt              - Number of integration points of the face.
+   * \param[in]  NPad              - Value of the padding parameter to obtain optimal
+                                     performance in the gemm computations.
    * \param[in]  solInt0           - Solution in the integration points of side 0.
    * \param[in]  solInt1           - Solution in the integration points of side 1.
    * \param[in]  viscosityInt0     - Viscosity in the integration points of side 0.
@@ -14127,7 +14227,9 @@ private:
                                      contain the normals.
    * \param[out] symmFluxes        - Symmetrizing fluxes in the integration points.
    */
-  void SymmetrizingFluxesFace(const unsigned short nInt,
+  void SymmetrizingFluxesFace(const unsigned short indFaceChunk,
+                              const unsigned short nInt,
+                              const unsigned short NPad,
                               const su2double      *solInt0,
                               const su2double      *solInt1,
                               const su2double      *viscosityInt0,
@@ -14141,17 +14243,22 @@ private:
    * \brief Function, which transforms the symmetrizing fluxes in the integration points
             such that they are suited to be multiplied by the parametric gradients of
             the basis functions.
-   * \param[in]  nInt              - Number of integration points of the face.
-   * \param[in]  halfTheta         - Half times the theta parameter in the symmetrizing terms.
-   * \param[in]  symmFluxes        - Symmetrizing fluxes to be multiplied by the Cartesian
-                                     gradients of the basis functions.
-   * \param[in]  weights           - Integration weights of the integration points.
-   * \param[in]  metricCoorFace    - Derivatives of the parametric coordinates w.r.t. the
-                                     Cartesian coordinates in the integration points of
-                                     the face.
-   * \param[out] paramFluxes       - Parametric fluxes in the integration points.
+   * \param[in]  indFaceChunk   - Index of the face in the chunk of fused faces.
+   * \param[in]  nInt           - Number of integration points of the face.
+   * \param[in]  NPad           - Value of the padding parameter to obtain optimal
+                                  performance in the gemm computations.
+   * \param[in]  halfTheta      - Half times the theta parameter in the symmetrizing terms.
+   * \param[in]  symmFluxes     - Symmetrizing fluxes to be multiplied by the Cartesian
+                                  gradients of the basis functions.
+   * \param[in]  weights        - Integration weights of the integration points.
+   * \param[in]  metricCoorFace - Derivatives of the parametric coordinates w.r.t. the
+                                  Cartesian coordinates in the integration points of
+                                  the face.
+   * \param[out] paramFluxes    - Parametric fluxes in the integration points.
    */
-  void TransformSymmetrizingFluxes(const unsigned short nInt,
+  void TransformSymmetrizingFluxes(const unsigned short indFaceChunk,
+                                   const unsigned short nInt,
+                                   const unsigned short NPad,
                                    const su2double      halfTheta,
                                    const su2double      *symmFluxes,
                                    const su2double      *weights,
@@ -14160,18 +14267,16 @@ private:
 
   /*!
    * \brief Function to compute the viscous normal fluxes in the integration points of a face.
-   * \param[in]   config              - Definition of the particular problem.
    * \param[in]   adjVolElem          - Pointer to the adjacent volume.
-   * \param[in]   timeLevelFace       - The time level of the face.
+   * \param[in]   indFaceChunk        - Index of the face in the chunk of fused faces.
    * \param[in]   nInt                - Number of integration points of the face.
+   * \param[in]   NPad                - Value of the padding parameter to obtain optimal
+                                        performance in the gemm computations.
    * \param[in]   Wall_HeatFlux       - The value of the prescribed heat flux.
    * \param[in]   HeatFlux_Prescribed - Whether or not the heat flux is prescribed by
                                         e.g. the boundary conditions.
-   * \param[in]   derBasisElem        - Derivatives w.r.t. the parametric coordinates
-                                        of the basis functions of the adjacent face.
    * \param[in]   solInt              - Solution in the integration points.
-   * \param[in]   DOFsElem            - The DOFs of the adjacent element in the sequence
-                                        needed by the face element.
+   * \param[in]   gradSolInt          - Gradient of the solution in the integration points.
    * \param[in]   metricCoorDerivFace - Metric terms in the integration points, which
                                         contain the derivatives of the parametric
                                         coordinates w.r.t. the Cartesian coordinates.
@@ -14179,26 +14284,23 @@ private:
    * \param[in]   metricNormalsFace   - Metric terms in the integration points, which
                                         contain the normals.
    * \param[in]   wallDistanceInt     - Wall distances in the integration points of the face.
-   * \param[out]  gradSolInt          - Gradient of the solution in the integration points.
    * \param[out]  viscNormFluxes      - Viscous normal fluxes in the integration points.
    * \param[out]  viscosityInt        - Viscosity in the integration points, which is
                                         needed for other terms in the discretization.
    * \param[out]  kOverCvInt          - Thermal conductivity over Cv in the integration points,
                                         which is needed for other terms in the discretization.
    */
-  void ViscousNormalFluxFace(CConfig                 *config,
-                             const CVolumeElementFEM *adjVolElem,
-                             const unsigned short    timeLevelFace,
+  void ViscousNormalFluxFace(const CVolumeElementFEM *adjVolElem,
+                             const unsigned short    indFaceChunk,
                              const unsigned short    nInt,
+                             const unsigned short    NPad,
                              const su2double         Wall_HeatFlux,
                              const bool              HeatFlux_Prescribed,
-                             const su2double         *derBasisElem,
                              const su2double         *solInt,
-                             const unsigned long     *DOFsElem,
+                             const su2double         *gradSolInt,
                              const su2double         *metricCoorDerivFace,
                              const su2double         *metricNormalsFace,
                              const su2double         *wallDistanceInt,
-                                   su2double         *gradSolInt,
                                    su2double         *viscNormFluxes,
                                    su2double         *viscosityInt,
                                    su2double         *kOverCvInt);
