@@ -14707,7 +14707,7 @@ void CPhysicalGeometry::SetSensitivity(CConfig *config) {
      variable string names here. Only the master rank reads the header. ---*/
     
     if (rank == MASTER_NODE)
-      MPI_File_read(fhw, Restart_Vars, nRestart_Vars, MPI_INT, SU2_MPI::Status_IGNORE);
+      MPI_File_read(fhw, Restart_Vars, nRestart_Vars, MPI_INT, MPI_STATUS_IGNORE);
 
     /*--- Broadcast the number of variables to all procs and store clearly. ---*/
 
@@ -14740,7 +14740,7 @@ void CPhysicalGeometry::SetSensitivity(CConfig *config) {
     if (rank == MASTER_NODE) {
       disp = nRestart_Vars*sizeof(int);
       MPI_File_read_at(fhw, disp, mpi_str_buf, nFields*CGNS_STRING_SIZE,
-                       MPI_CHAR, SU2_MPI::Status_IGNORE);
+                       MPI_CHAR, MPI_STATUS_IGNORE);
     }
 
     /*--- Broadcast the string names of the variables. ---*/
@@ -14823,13 +14823,13 @@ void CPhysicalGeometry::SetSensitivity(CConfig *config) {
       /*--- External iteration. ---*/
       disp = (nRestart_Vars*sizeof(int) + nFields*CGNS_STRING_SIZE*sizeof(char) +
               nFields*Restart_Vars[2]*sizeof(passivedouble));
-      MPI_File_read_at(fhw, disp, &Restart_Iter, 1, MPI_INT, SU2_MPI::Status_IGNORE);
+      MPI_File_read_at(fhw, disp, &Restart_Iter, 1, MPI_INT, MPI_STATUS_IGNORE);
 
       /*--- Additional doubles for AoA, AoS, etc. ---*/
 
       disp = (nRestart_Vars*sizeof(int) + nFields*CGNS_STRING_SIZE*sizeof(char) +
               nFields*Restart_Vars[2]*sizeof(passivedouble) + 1*sizeof(int));
-      MPI_File_read_at(fhw, disp, Restart_Meta_Passive, 8, MPI_DOUBLE, SU2_MPI::Status_IGNORE);
+      MPI_File_read_at(fhw, disp, Restart_Meta_Passive, 8, MPI_DOUBLE, MPI_STATUS_IGNORE);
 
     }
 
@@ -14945,7 +14945,7 @@ void CPhysicalGeometry::SetSensitivity(CConfig *config) {
     /*--- Have the master attempt to read the magic number. ---*/
 
     if (rank == MASTER_NODE)
-      MPI_File_read(fhw, &magic_number, 1, MPI_INT, SU2_MPI::Status_IGNORE);
+      MPI_File_read(fhw, &magic_number, 1, MPI_INT, MPI_STATUS_IGNORE);
 
     /*--- Broadcast the number of variables to all procs and store clearly. ---*/
 

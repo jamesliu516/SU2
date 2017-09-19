@@ -159,6 +159,13 @@ public:
                        int dest, int sendtag, void *recvbuf, int recvcnt,
                        MPI_Datatype recvtype,int source, int recvtag,
                        MPI_Comm comm, MPI_Status *status);
+  
+  static void Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                           void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                           Comm comm);
+  
+  static int Probe(int source, int tag, Comm comm, MPI_Status *status);
+  
 };
 
 #if defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
@@ -247,7 +254,7 @@ public:
 class CMPIWrapper {
   
 public:
-  typedef double Comm;
+  typedef su2double Comm;
   typedef int Datatype;
   typedef int Request;
   typedef int Op;

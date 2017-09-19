@@ -165,6 +165,17 @@ inline void CMPIWrapper::Waitany(int nrequests, SU2_MPI::Request *request,
   MPI_Waitany(nrequests, request, index, status);
 #endif
 }
+
+inline void CMPIWrapper::Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
+                         void *recvbuf, int recvcount, MPI_Datatype recvtype,
+                     Comm comm){
+  MPI_Alltoall(sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, comm);
+}
+
+inline int CMPIWrapper::Probe(int source, int tag, Comm comm, MPI_Status *status){
+  return MPI_Probe(source, tag, comm, status);
+}
+
   
 
 #if defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
@@ -328,7 +339,7 @@ inline void CMPIWrapper::Buffer_detach(void *buffer, int *size) {}
 
 inline void CMPIWrapper::Barrier(Comm comm) {}
 
-inline void CMPIWrapper::Abort(Comm comm, int error) {exit(EXIT_FAILURE);}
+inline void CMPIWrapper::Abort(Comm comm, int error) {exit(1);}
 
 inline void CMPIWrapper::Comm_rank(Comm comm, int *rank) {*rank = 0;}
 
