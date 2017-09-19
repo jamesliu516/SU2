@@ -38,11 +38,7 @@
 
 CConfig::CConfig(char case_filename[MAX_STRING_SIZE], unsigned short val_software, unsigned short val_iZone, unsigned short val_nZone, unsigned short val_nDim, unsigned short verb_level) {
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#else
-  rank = MASTER_NODE;
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- Initialize pointers to Null---*/
 
@@ -127,6 +123,7 @@ void CConfig::SetMPICommunicator(SU2_MPI::Comm Communicator) {
 
 }
 
+
 unsigned short CConfig::GetnZone(string val_mesh_filename, unsigned short val_format, CConfig *config) {
   string text_line, Marker_Tag;
   ifstream mesh_file;
@@ -136,9 +133,7 @@ unsigned short CConfig::GetnZone(string val_mesh_filename, unsigned short val_fo
   string::size_type position;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   /*--- Search the mesh file for the 'NZONE' keyword. ---*/
 
@@ -153,13 +148,9 @@ unsigned short CConfig::GetnZone(string val_mesh_filename, unsigned short val_fo
         if (rank == MASTER_NODE) {
           cout << "There is no geometry file called " << cstr << "." << endl;
         }
-#ifndef HAVE_MPI
-        exit(EXIT_FAILURE);
-#else
-        MPI_Barrier(MPI_COMM_WORLD);
-        MPI_Abort(MPI_COMM_WORLD,1);
-        MPI_Finalize();
-#endif
+        SU2_MPI::Barrier(MPI_COMM_WORLD);
+        SU2_MPI::Abort(MPI_COMM_WORLD,1);
+        SU2_MPI::Finalize();
       }
 
       /*--- Read the SU2 mesh file ---*/
@@ -1897,10 +1888,8 @@ void CConfig::SetConfig_Parsing(char case_filename[MAX_STRING_SIZE]) {
   vector<string> option_value;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
   /*--- Read the configuration file ---*/
   
   case_file.open(case_filename, ios::in);
@@ -1995,9 +1984,7 @@ bool CConfig::SetRunTime_Parsing(char case_filename[MAX_STRING_SIZE]) {
   vector<string> option_value;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   /*--- Read the configuration file ---*/
   
@@ -2087,11 +2074,9 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
   bool standard_air       = (Kind_FluidModel == STANDARD_AIR);
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
   int size = SINGLE_NODE;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
 #ifndef HAVE_TECIO
   if (Output_FileFormat == TECPLOT_BINARY) {
@@ -3373,10 +3358,8 @@ void CConfig::SetMarkers(unsigned short val_software) {
 
   int size = SINGLE_NODE;
   
-#ifdef HAVE_MPI
   if (val_software != SU2_MSH)
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+    SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
 
   /*--- Compute the total number of markers in the config file ---*/
   

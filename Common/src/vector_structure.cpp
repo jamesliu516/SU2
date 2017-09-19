@@ -56,10 +56,8 @@ CSysVector::CSysVector(const unsigned long & size, const su2double & val) {
   for (unsigned int i = 0; i < nElm; i++)
     vec_val[i] = val;
   
-#ifdef HAVE_MPI
   unsigned long nElmLocal = (unsigned long)nElm;
   SU2_MPI::Allreduce(&nElmLocal, &nElmGlobal, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
 }
 
@@ -81,12 +79,10 @@ CSysVector::CSysVector(const unsigned long & numBlk, const unsigned long & numBl
   for (unsigned int i = 0; i < nElm; i++)
     vec_val[i] = val;
   
-#ifdef HAVE_MPI
   int myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &myrank);
   unsigned long nElmLocal = (unsigned long)nElm;
   SU2_MPI::Allreduce(&nElmLocal, &nElmGlobal, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
 }
 
@@ -101,9 +97,7 @@ CSysVector::CSysVector(const CSysVector & u) {
   for (unsigned long i = 0; i < nElm; i++)
     vec_val[i] = u.vec_val[i];
   
-#ifdef HAVE_MPI
   nElmGlobal = u.nElmGlobal;
-#endif
   
 }
 
@@ -124,12 +118,10 @@ CSysVector::CSysVector(const unsigned long & size, const su2double* u_array) {
   for (unsigned long i = 0; i < nElm; i++)
     vec_val[i] = u_array[i];
 
-#ifdef HAVE_MPI
   int myrank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &myrank);
   unsigned long nElmLocal = (unsigned long)nElm;
   SU2_MPI::Allreduce(&nElmLocal, &nElmGlobal, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
 }
 
@@ -151,10 +143,8 @@ CSysVector::CSysVector(const unsigned long & numBlk, const unsigned long & numBl
   for (unsigned long i = 0; i < nElm; i++)
     vec_val[i] = u_array[i];
 
-#ifdef HAVE_MPI
   unsigned long nElmLocal = (unsigned long)nElm;
   SU2_MPI::Allreduce(&nElmLocal, &nElmGlobal, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
 }
 
@@ -184,10 +174,8 @@ void CSysVector::Initialize(const unsigned long & numBlk, const unsigned long & 
   for (unsigned long i = 0; i < nElm; i++)
     vec_val[i] = val;
   
-#ifdef HAVE_MPI
   unsigned long nElmLocal = (unsigned long)nElm;
   SU2_MPI::Allreduce(&nElmLocal, &nElmGlobal, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
 }
 
@@ -238,9 +226,7 @@ CSysVector & CSysVector::operator=(const CSysVector & u) {
   for (unsigned long i = 0; i < nElm; i++)
     vec_val[i] = u.vec_val[i];
   
-#ifdef HAVE_MPI
   nElmGlobal = u.nElmGlobal;
-#endif
   
   return *this;
 }
@@ -410,11 +396,7 @@ su2double dotProd(const CSysVector & u, const CSysVector & v) {
     loc_prod += u.vec_val[i]*v.vec_val[i];
   su2double prod = 0.0;
   
-#ifdef HAVE_MPI
   SU2_MPI::Allreduce(&loc_prod, &prod, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-  prod = loc_prod;
-#endif
   
   return prod;
 }

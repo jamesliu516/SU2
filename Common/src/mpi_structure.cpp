@@ -40,4 +40,6 @@ AMPI_ADOUBLE_TYPE* AMPI_ADOUBLE;
 #include <medi/medi.cpp>
 #endif // defined CODI_REVERSE_TYPE || defined CODI_FORWARD_TYPE
 
-#endif // HAVE_MPI
+#else // HAVE_MPI
+CMPIWrapper::Status* MPI_STATUS_IGNORE;
+#endif

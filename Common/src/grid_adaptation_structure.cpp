@@ -125,9 +125,8 @@ void CGridAdaptation::GetFlowSolution(CGeometry *geometry, CConfig *config) {
 
 	char *cstr = new char [mesh_filename.size()+1];
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
 	strcpy (cstr, mesh_filename.c_str());
 	restart_file.open(cstr, ios::in);
@@ -167,9 +166,9 @@ void CGridAdaptation::GetFlowResidual(CGeometry *geometry, CConfig *config) {
 	
 	char *cstr = new char [mesh_filename.size()+1];
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
 
 	strcpy (cstr, mesh_filename.c_str());
 	restart_file.open(cstr, ios::in);
@@ -208,9 +207,8 @@ void CGridAdaptation::GetAdjSolution(CGeometry *geometry, CConfig *config) {
 	string copy, mesh_filename;
 	ifstream restart_file;
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
 
   /*--- Get the adjoint solution file name ---*/
 	mesh_filename = config->GetSolution_AdjFileName();
@@ -219,14 +217,10 @@ void CGridAdaptation::GetAdjSolution(CGeometry *geometry, CConfig *config) {
 	restart_file.open(mesh_filename.c_str(), ios::in);
 	if (restart_file.fail()) {
 	  if (rank == MASTER_NODE) cout << "There is no adjoint restart file!!" << endl;
-#ifndef HAVE_MPI
-      exit(EXIT_FAILURE);
-#else
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
-#endif
-}
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
+  }
 	
   /*--- Read the header of the file ---*/
   getline(restart_file, text_line);
@@ -256,9 +250,8 @@ void CGridAdaptation::GetAdjResidual(CGeometry *geometry, CConfig *config) {
 	string mesh_filename, copy;
 	ifstream restart_file;
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
 
 	char buffer[50], cstr[MAX_STRING_SIZE];
 	mesh_filename = config->GetSolution_AdjFileName();

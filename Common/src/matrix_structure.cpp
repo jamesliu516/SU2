@@ -797,10 +797,9 @@ void CSysMatrix::SendReceive_Solution(CSysVector & x, CGeometry *geometry, CConf
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive = NULL, *Buffer_Send = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
+
   
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
     
@@ -809,12 +808,8 @@ void CSysMatrix::SendReceive_Solution(CSysVector & x, CGeometry *geometry, CConf
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
-
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-      
-#endif
 
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -832,23 +827,10 @@ void CSysMatrix::SendReceive_Solution(CSysVector & x, CGeometry *geometry, CConf
           Buffer_Send[iVertex*nVar+iVar] = x[iPoint*nVar+iVar];
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       
       SU2_MPI::Sendrecv(Buffer_Send, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                    Buffer_Receive, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive[iVar*nVertexR+iVertex] = Buffer_Send[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       
@@ -885,10 +867,8 @@ void CSysMatrix::SendReceive_SolutionTransposed(CSysVector & x, CGeometry *geome
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive = NULL, *Buffer_Send = NULL;
 
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
 
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
 
@@ -897,12 +877,8 @@ void CSysMatrix::SendReceive_SolutionTransposed(CSysVector & x, CGeometry *geome
 
       MarkerS = iMarker + 1;  MarkerR = iMarker;
 
-#ifdef HAVE_MPI
-
       receive_from = config->GetMarker_All_SendRecv(MarkerR)-1;
       send_to = abs(config->GetMarker_All_SendRecv(MarkerS))-1;
-
-#endif
 
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -920,23 +896,10 @@ void CSysMatrix::SendReceive_SolutionTransposed(CSysVector & x, CGeometry *geome
           Buffer_Send[iVertex*nVar+iVar] = x[iPoint*nVar+iVar];
       }
 
-#ifdef HAVE_MPI
-
       /*--- Send/Receive information using Sendrecv ---*/
 
       SU2_MPI::Sendrecv(Buffer_Send, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                    Buffer_Receive, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-
-#else
-
-      /*--- Receive information without MPI ---*/
-
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive[iVar*nVertexR+iVertex] = Buffer_Send[iVar*nVertexR+iVertex];
-      }
-
-#endif
 
       /*--- Deallocate send buffer ---*/
 
@@ -1270,21 +1233,15 @@ unsigned long CSysMatrix::Jacobi_Smoother(const CSysVector & b, CSysVector & x, 
   unsigned long iPoint, iVar, jVar;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   /*---  Check the number of iterations requested ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysMatrix::Jacobi_Smoother(): illegal value for smoothing iterations, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*--- Create vectors to hold the residual and the Matrix-Vector product
@@ -1522,21 +1479,15 @@ unsigned long CSysMatrix::ILU0_Smoother(const CSysVector & b, CSysVector & x, CM
   unsigned short iVar;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   /*---  Check the number of iterations requested ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysMatrix::ILU0_Smoother(): illegal value for smoothing iterations, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*--- Create vectors to hold the residual and the Matrix-Vector product
@@ -1714,21 +1665,15 @@ unsigned long CSysMatrix::LU_SGS_Smoother(const CSysVector & b, CSysVector & x, 
   su2double omega = 1.0;
   int rank = MASTER_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
   /*---  Check the number of iterations requested ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysMatrix::LU_SGS_Smoother(): illegal value for smoothing iterations, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*--- Create vectors to hold the residual and the Matrix-Vector product
@@ -1987,13 +1932,8 @@ unsigned short CSysMatrix::BuildLineletPreconditioner(CGeometry *geometry, CConf
   }
   Local_nLineLets = nLinelet;
   
-#ifndef HAVE_MPI
-  Global_nPoints = Local_nPoints;
-  Global_nLineLets = Local_nLineLets;
-#else
   SU2_MPI::Allreduce(&Local_nPoints, &Global_nPoints, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
   SU2_MPI::Allreduce(&Local_nLineLets, &Global_nLineLets, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
   
   MeanPoints = SU2_TYPE::Int(su2double(Global_nPoints)/su2double(Global_nLineLets));
   
@@ -2036,10 +1976,8 @@ void CSysMatrix::ComputeLineletPreconditioner(const CSysVector & vec, CSysVector
   int rank = MASTER_NODE;
   int size = SINGLE_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
   
   if (size == SINGLE_NODE) {
     
@@ -2135,13 +2073,9 @@ void CSysMatrix::ComputeLineletPreconditioner(const CSysVector & vec, CSysVector
     
     if (rank == MASTER_NODE) cout << "ERROR: Linelet not implemented in parallel." << endl;
     
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
     
   }
   

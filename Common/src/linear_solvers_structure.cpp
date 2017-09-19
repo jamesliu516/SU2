@@ -89,11 +89,10 @@ void CSysSolve::ModGramSchmidt(int i, vector<vector<su2double> > & Hsbg, vector<
   bool Convergence = true;
   int rank = MASTER_NODE;
 
-#ifdef HAVE_MPI
   int size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
+
   
   /*--- Parameter for reorthonormalization ---*/
   
@@ -110,8 +109,6 @@ void CSysSolve::ModGramSchmidt(int i, vector<vector<su2double> > & Hsbg, vector<
   if ((nrm <= 0.0) || (nrm != nrm)) Convergence = false;
   
   /*--- Synchronization point to check the convergence of the solver ---*/
-
-#ifdef HAVE_MPI
   
   unsigned short *sbuf_conv = NULL, *rbuf_conv = NULL;
   sbuf_conv = new unsigned short[1]; sbuf_conv[0] = 0;
@@ -137,19 +134,14 @@ void CSysSolve::ModGramSchmidt(int i, vector<vector<su2double> > & Hsbg, vector<
   
   delete [] sbuf_conv;
   delete [] rbuf_conv;
-  
-#endif
+
   
   if (!Convergence) {
     if (rank == MASTER_NODE)
       cout << "\n !!! Error: SU2 has diverged. Now exiting... !!! \n" << endl;
-#ifndef HAVE_MPI
-		exit(EXIT_DIVERGENCE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*--- Begin main Gram-Schmidt loop ---*/
@@ -202,23 +194,18 @@ void CSysSolve::WriteHistory(const int & iter, const su2double & res, const su2d
 unsigned long CSysSolve::CG_LinSolver(const CSysVector & b, CSysVector & x, CMatrixVectorProduct & mat_vec,
                                            CPreconditioner & precond, su2double tol, unsigned long m, bool monitoring) {
 
-int rank = 0;
+  int rank = 0;
 
-#ifdef HAVE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
 
   /*--- Check the subspace size ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysSolve::ConjugateGradient: illegal value for subspace size, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   CSysVector r(b);
@@ -321,35 +308,27 @@ int rank = 0;
 unsigned long CSysSolve::FGMRES_LinSolver(const CSysVector & b, CSysVector & x, CMatrixVectorProduct & mat_vec,
                                CPreconditioner & precond, su2double tol, unsigned long m, su2double *residual, bool monitoring) {
 	
-int rank = 0;
+  int rank = 0;
 
-#ifdef HAVE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
   
   /*---  Check the subspace size ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysSolve::FGMRES: illegal value for subspace size, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
 
   /*---  Check the subspace size ---*/
   
   if (m > 1000) {
     if (rank == MASTER_NODE) cerr << "CSysSolve::FGMRES: illegal value for subspace size (too high), m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-	MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*---  Define various arrays
@@ -478,21 +457,16 @@ unsigned long CSysSolve::BCGSTAB_LinSolver(const CSysVector & b, CSysVector & x,
                                            CPreconditioner & precond, su2double tol, unsigned long m, su2double *residual, bool monitoring) {
   
   int rank = 0;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+
   
   /*--- Check the subspace size ---*/
   
   if (m < 1) {
     if (rank == MASTER_NODE) cerr << "CSysSolve::BCGSTAB: illegal value for subspace size, m = " << m << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   CSysVector r(b);
