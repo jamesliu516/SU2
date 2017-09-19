@@ -37,9 +37,9 @@
 #ifdef HAVE_MPI
 #include "mpi.h"
 #include <map>
-#include <stdlib.h>
 #endif
 
+#include <stdlib.h>
 #include "./datatype_structure.hpp"
 
 #ifdef HAVE_MPI
