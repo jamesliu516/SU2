@@ -177,24 +177,9 @@ CSolver::~CSolver(void) {
 void CSolver::SetResidual_RMS(CGeometry *geometry, CConfig *config) {
   unsigned short iVar;
   
-#ifndef HAVE_MPI
-  
-  for (iVar = 0; iVar < nVar; iVar++) {
-    
-    if (GetRes_RMS(iVar) != GetRes_RMS(iVar)) {
-      cout << "\n !!! Error: SU2 has diverged. Now exiting... !!! \n" << endl;
-      exit(EXIT_FAILURE);
-    }
-
-    SetRes_RMS(iVar, max(EPS*EPS, sqrt(GetRes_RMS(iVar)/geometry->GetnPoint())));
-    
-  }
-  
-#else
-  
   int nProcessor, iProcessor, rank;
-  MPI_Comm_size(MPI_COMM_WORLD, &nProcessor);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &nProcessor);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   su2double *sbuf_residual, *rbuf_residual, *sbuf_coord, *rbuf_coord, *Coord;
   unsigned long *sbuf_point, *rbuf_point, Local_nPointDomain, Global_nPointDomain;
@@ -220,9 +205,9 @@ void CSolver::SetResidual_RMS(CGeometry *geometry, CConfig *config) {
       if (rank == MASTER_NODE)
         cout << "\n !!! Error: SU2 has diverged. Now exiting... !!! \n" << endl;
       
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
       
     }
     
@@ -268,8 +253,6 @@ void CSolver::SetResidual_RMS(CGeometry *geometry, CConfig *config) {
   
   delete [] sbuf_coord;
   delete [] rbuf_coord;
-  
-#endif
   
 }
 
@@ -1131,16 +1114,9 @@ void CSolver::SetSolution_Limiter(CGeometry *geometry, CConfig *config) {
       }
       
     }
-    
-#ifdef HAVE_MPI
+
     SU2_MPI::Allreduce(LocalMinSolution, GlobalMinSolution, nVar, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
     SU2_MPI::Allreduce(LocalMaxSolution, GlobalMaxSolution, nVar, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-#else
-    for (iVar = 0; iVar < nVar; iVar++) {
-      GlobalMinSolution[iVar] = LocalMinSolution[iVar];
-      GlobalMaxSolution[iVar] = LocalMaxSolution[iVar];
-    }
-#endif
     
     for (iEdge = 0; iEdge < geometry->GetnEdge(); iEdge++) {
       
@@ -1850,23 +1826,15 @@ void CSolver::Restart_OldGeometry(CGeometry *geometry, CConfig *config) {
 
   if (iPoint_Global_Local < geometry->GetnPointDomain()) { sbuf_NotMatching = 1; }
 
-#ifndef HAVE_MPI
-  rbuf_NotMatching = sbuf_NotMatching;
-#else
   SU2_MPI::Allreduce(&sbuf_NotMatching, &rbuf_NotMatching, 1, MPI_UNSIGNED_SHORT, MPI_SUM, MPI_COMM_WORLD);
-#endif
   if (rbuf_NotMatching != 0) {
     if (rank == MASTER_NODE) {
       cout << endl << "The solution file " << filename_n.data() << " doesn't match with the mesh file!" << endl;
       cout << "It could be empty lines at the end of the file." << endl << endl;
     }
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
 
   /*--- Close the restart file ---*/
@@ -1933,23 +1901,15 @@ void CSolver::Restart_OldGeometry(CGeometry *geometry, CConfig *config) {
 
     if (iPoint_Global_Local < geometry->GetnPointDomain()) { sbuf_NotMatching = 1; }
 
-#ifndef HAVE_MPI
-    rbuf_NotMatching = sbuf_NotMatching;
-#else
     SU2_MPI::Allreduce(&sbuf_NotMatching, &rbuf_NotMatching, 1, MPI_UNSIGNED_SHORT, MPI_SUM, MPI_COMM_WORLD);
-#endif
     if (rbuf_NotMatching != 0) {
       if (rank == MASTER_NODE) {
         cout << endl << "The solution file " << filename_n1.data() << " doesn't match with the mesh file!" << endl;
         cout << "It could be empty lines at the end of the file." << endl << endl;
       }
-#ifndef HAVE_MPI
-      exit(EXIT_FAILURE);
-#else
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
-#endif
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- Close the restart file ---*/
@@ -1976,10 +1936,8 @@ void CSolver::Read_SU2_Restart_ASCII(CGeometry *geometry, CConfig *config, strin
   config->fields.clear();
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  
   Restart_Vars = new int[5];
 
   /*--- First, check that this is not a binary restart file. ---*/
@@ -2078,13 +2036,11 @@ void CSolver::Read_SU2_Restart_ASCII(CGeometry *geometry, CConfig *config, strin
   if (restart_file.fail()) {
     if (rank == MASTER_NODE)
       cout << "SU2 ASCII solution file " << val_filename << " not found." << endl;
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
+
   }
 
   /*--- Identify the number of fields (and names) in the restart file ---*/
@@ -2215,7 +2171,7 @@ void CSolver::Read_SU2_Restart_Binary(CGeometry *geometry, CConfig *config, stri
   string field_buf;
 
   int rank = MASTER_NODE, ierr;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- All ranks open the file using MPI. ---*/
 
@@ -2226,9 +2182,9 @@ void CSolver::Read_SU2_Restart_Binary(CGeometry *geometry, CConfig *config, stri
   if (ierr) {
     if (rank == MASTER_NODE)
       cout << endl << "Error: unable to open SU2 restart file " << fname << "." << endl;
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
 
   /*--- First, read the number of variables and points (i.e., cols and rows),
@@ -2252,9 +2208,9 @@ void CSolver::Read_SU2_Restart_Binary(CGeometry *geometry, CConfig *config, stri
       cout << " Note that backward compatibility for ASCII restart files is" << endl;
       cout << " possible with the WRT_BINARY_RESTART / READ_BINARY_RESTART options." << endl << endl;
     }
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
 
   /*--- Store the number of fields to be read for clarity. ---*/
@@ -2367,9 +2323,7 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
 	bool adjoint = (config->GetContinuous_Adjoint()) || (config->GetDiscrete_Adjoint());
 
 	int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+	SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
 	if (config->GetRead_Binary_Restart()) {
 
@@ -2433,7 +2387,7 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
 		MPI_File fhw;
 		MPI_Offset disp;
 		int rank = MASTER_NODE, ierr;
-		MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+		SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
 		/*--- All ranks open the file using MPI. ---*/
 
@@ -2444,9 +2398,9 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
 		if (ierr) {
 			if (rank == MASTER_NODE)
 				cout << endl << "Error: unable to open SU2 restart file " << fname << "." << endl;
-			MPI_Barrier(MPI_COMM_WORLD);
-			MPI_Abort(MPI_COMM_WORLD,1);
-			MPI_Finalize();
+			SU2_MPI::Barrier(MPI_COMM_WORLD);
+			SU2_MPI::Abort(MPI_COMM_WORLD,1);
+			SU2_MPI::Finalize();
 		}
 
 		/*--- First, read the number of variables and points (i.e., cols and rows),
@@ -2470,9 +2424,9 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
         cout << " Note that backward compatibility for ASCII restart files is" << endl;
         cout << " possible with the WRT_BINARY_RESTART / READ_BINARY_RESTART options." << endl << endl;
       }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- Access the metadata. ---*/
@@ -2567,7 +2521,7 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
 
     MPI_File fhw;
     int ierr;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
     /*--- All ranks open the file using MPI. ---*/
 
@@ -2578,9 +2532,9 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
     if (ierr) {
       if (rank == MASTER_NODE)
         cout << endl << "Error: unable to open SU2 restart file " << fname << "." << endl;
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- Have the master attempt to read the magic number. ---*/
@@ -2602,9 +2556,9 @@ void CSolver::Read_SU2_Restart_Metadata(CGeometry *geometry, CConfig *config, bo
         cout << " Note that backward compatibility for ASCII restart files is" << endl;
         cout << " possible with the WRT_BINARY_RESTART / READ_BINARY_RESTART options." << endl << endl;
       }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
     
     MPI_File_close(&fhw);
@@ -2931,9 +2885,7 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
   /*--- Open the ASCII restart file and extract the nVar and field names. ---*/
 
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   string Tag, text_line, AdjExt, UnstExt;
   unsigned long iExtIter = config->GetExtIter();
@@ -3016,7 +2968,7 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
 
     MPI_File fhw;
     int rank = MASTER_NODE, ierr;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
     /*--- All ranks open the file using MPI. ---*/
 
@@ -3027,9 +2979,9 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
     if (ierr) {
       if (rank == MASTER_NODE)
         cout << endl << "Error: unable to open SU2 restart file " << fname << "." << endl;
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- First, read the number of variables and points (i.e., cols and rows),
@@ -3054,9 +3006,9 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
         cout << " Note that backward compatibility for ASCII restart files is" << endl;
         cout << " possible with the WRT_BINARY_RESTART / READ_BINARY_RESTART options." << endl << endl;
       }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- All ranks close the file after writing. ---*/
@@ -3115,7 +3067,7 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
 
     MPI_File fhw;
     int ierr;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
     /*--- All ranks open the file using MPI. ---*/
 
@@ -3126,9 +3078,9 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
     if (ierr) {
       if (rank == MASTER_NODE)
         cout << endl << "Error: unable to open SU2 restart file " << fname << "." << endl;
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
 
     /*--- Have the master attempt to read the magic number. ---*/
@@ -3150,9 +3102,9 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
         cout << " Note that backward compatibility for ASCII restart files is" << endl;
         cout << " possible with the WRT_BINARY_RESTART / READ_BINARY_RESTART options." << endl << endl;
       }
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
     
     MPI_File_close(&fhw);
@@ -3172,9 +3124,9 @@ void CBaselineSolver::SetOutputVariables(CGeometry *geometry, CConfig *config) {
 #ifndef HAVE_MPI
       exit(EXIT_FAILURE);
 #else
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
 #endif
     }
     
@@ -3218,10 +3170,8 @@ void CBaselineSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
   else if (config->GetKind_Turb_Model() == SST) { GridVel_Index += 2; }
   if (config->GetKind_Regime() != INCOMPRESSIBLE) { GridVel_Index += 1; }
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
     
@@ -3229,13 +3179,9 @@ void CBaselineSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
         (config->GetMarker_All_SendRecv(iMarker) > 0)) {
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
-      
-#ifdef HAVE_MPI
 
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-      
-#endif
 
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -3253,23 +3199,10 @@ void CBaselineSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
           Buffer_Send_U[iVar*nVertexS+iVertex] = node[iPoint]->GetSolution(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                    Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       
@@ -3393,9 +3326,7 @@ void CBaselineSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
 void CBaselineSolver::LoadRestart(CGeometry **geometry, CSolver ***solver, CConfig *config, int val_iter, bool val_update_geo) {
 
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- Restart the solution from file information ---*/
 
@@ -3550,9 +3481,7 @@ void CBaselineSolver::LoadRestart(CGeometry **geometry, CSolver ***solver, CConf
 void CBaselineSolver::LoadRestart_FSI(CGeometry *geometry, CSolver ***solver, CConfig *config, int val_iter) {
 
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- Restart the solution from file information ---*/
   string filename;

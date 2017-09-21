@@ -105,10 +105,8 @@ CIncEulerSolver::CIncEulerSolver(CGeometry *geometry, CConfig *config, unsigned 
 
   unsigned short direct_diff = config->GetDirectDiff();
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  
   /*--- Check for a restart file to evaluate if there is a change in the angle of attack
    before computing all the non-dimesional quantities. ---*/
 
@@ -635,10 +633,8 @@ void CIncEulerSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
   phi, cosPhi, sinPhi, psi, cosPsi, sinPsi,
   *Buffer_Receive_U = NULL, *Buffer_Send_U = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -647,10 +643,8 @@ void CIncEulerSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -668,22 +662,10 @@ void CIncEulerSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
           Buffer_Send_U[iVar*nVertexS+iVertex] = node[iPoint]->GetSolution(iVar);
       }
       
-#ifdef HAVE_MPI
       /*--- Send/Receive information using Sendrecv ---*/
       
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_U;
@@ -755,10 +737,8 @@ void CIncEulerSolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *config)
   su2double rotMatrix[3][3], *angles, theta, cosTheta, sinTheta, phi, cosPhi, sinPhi, psi, cosPsi, sinPsi,
   *Buffer_Receive_U = NULL, *Buffer_Send_U = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -767,10 +747,8 @@ void CIncEulerSolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *config)
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -786,21 +764,9 @@ void CIncEulerSolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *config)
           Buffer_Send_U[iVar*nVertexS+iVertex] = node[iPoint]->GetSolution_Old(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_U;
@@ -871,10 +837,8 @@ void CIncEulerSolver::Set_MPI_Undivided_Laplacian(CGeometry *geometry, CConfig *
   su2double rotMatrix[3][3], *angles, theta, cosTheta, sinTheta, phi, cosPhi, sinPhi, psi, cosPsi, sinPsi,
   *Buffer_Receive_Undivided_Laplacian = NULL, *Buffer_Send_Undivided_Laplacian = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -883,10 +847,8 @@ void CIncEulerSolver::Set_MPI_Undivided_Laplacian(CGeometry *geometry, CConfig *
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -902,21 +864,9 @@ void CIncEulerSolver::Set_MPI_Undivided_Laplacian(CGeometry *geometry, CConfig *
           Buffer_Send_Undivided_Laplacian[iVar*nVertexS+iVertex] = node[iPoint]->GetUndivided_Laplacian(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Undivided_Laplacian, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Undivided_Laplacian, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_Undivided_Laplacian[iVar*nVertexR+iVertex] = Buffer_Send_Undivided_Laplacian[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Undivided_Laplacian;
@@ -987,10 +937,8 @@ void CIncEulerSolver::Set_MPI_MaxEigenvalue(CGeometry *geometry, CConfig *config
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive_Lambda = NULL, *Buffer_Send_Lambda = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -999,10 +947,8 @@ void CIncEulerSolver::Set_MPI_MaxEigenvalue(CGeometry *geometry, CConfig *config
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS;        nBufferR_Vector = nVertexR;
@@ -1020,23 +966,11 @@ void CIncEulerSolver::Set_MPI_MaxEigenvalue(CGeometry *geometry, CConfig *config
         Buffer_Send_Neighbor[iVertex] = geometry->node[iPoint]->GetnPoint();
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Lambda, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Lambda, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
       SU2_MPI::Sendrecv(Buffer_Send_Neighbor, nBufferS_Vector, MPI_UNSIGNED_SHORT, send_to, 1,
                         Buffer_Receive_Neighbor, nBufferR_Vector, MPI_UNSIGNED_SHORT, receive_from, 1, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        Buffer_Receive_Lambda[iVertex] = Buffer_Send_Lambda[iVertex];
-        Buffer_Receive_Neighbor[iVertex] = Buffer_Send_Neighbor[iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Lambda;
@@ -1065,11 +999,9 @@ void CIncEulerSolver::Set_MPI_Dissipation_Switch(CGeometry *geometry, CConfig *c
   unsigned short iMarker, MarkerS, MarkerR;
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive_Lambda = NULL, *Buffer_Send_Lambda = NULL;
-  
-#ifdef HAVE_MPI
+
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -1078,10 +1010,8 @@ void CIncEulerSolver::Set_MPI_Dissipation_Switch(CGeometry *geometry, CConfig *c
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS;        nBufferR_Vector = nVertexR;
@@ -1096,20 +1026,9 @@ void CIncEulerSolver::Set_MPI_Dissipation_Switch(CGeometry *geometry, CConfig *c
         Buffer_Send_Lambda[iVertex] = node[iPoint]->GetSensor();
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Lambda, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Lambda, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        Buffer_Receive_Lambda[iVertex] = Buffer_Send_Lambda[iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Lambda;
@@ -1140,11 +1059,9 @@ void CIncEulerSolver::Set_MPI_Solution_Gradient(CGeometry *geometry, CConfig *co
   su2double **Gradient = new su2double* [nVar];
   for (iVar = 0; iVar < nVar; iVar++)
     Gradient[iVar] = new su2double[nDim];
-  
-#ifdef HAVE_MPI
+
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -1153,10 +1070,8 @@ void CIncEulerSolver::Set_MPI_Solution_Gradient(CGeometry *geometry, CConfig *co
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar*nDim;        nBufferR_Vector = nVertexR*nVar*nDim;
@@ -1173,22 +1088,9 @@ void CIncEulerSolver::Set_MPI_Solution_Gradient(CGeometry *geometry, CConfig *co
             Buffer_Send_Gradient[iDim*nVar*nVertexS+iVar*nVertexS+iVertex] = node[iPoint]->GetGradient(iVar, iDim);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Gradient, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Gradient, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          for (iDim = 0; iDim < nDim; iDim++)
-            Buffer_Receive_Gradient[iDim*nVar*nVertexR+iVar*nVertexR+iVertex] = Buffer_Send_Gradient[iDim*nVar*nVertexR+iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Gradient;
@@ -1261,11 +1163,9 @@ void CIncEulerSolver::Set_MPI_Solution_Limiter(CGeometry *geometry, CConfig *con
   *Buffer_Receive_Limit = NULL, *Buffer_Send_Limit = NULL;
   
   su2double *Limiter = new su2double [nVar];
-  
-#ifdef HAVE_MPI
+
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -1274,10 +1174,8 @@ void CIncEulerSolver::Set_MPI_Solution_Limiter(CGeometry *geometry, CConfig *con
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;        nBufferR_Vector = nVertexR*nVar;
@@ -1293,21 +1191,9 @@ void CIncEulerSolver::Set_MPI_Solution_Limiter(CGeometry *geometry, CConfig *con
           Buffer_Send_Limit[iVar*nVertexS+iVertex] = node[iPoint]->GetLimiter(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Limit, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Limit, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_Limit[iVar*nVertexR+iVertex] = Buffer_Send_Limit[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Limit;
@@ -1384,11 +1270,9 @@ void CIncEulerSolver::Set_MPI_Primitive_Gradient(CGeometry *geometry, CConfig *c
   su2double **Gradient = new su2double* [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++)
     Gradient[iVar] = new su2double[nDim];
-  
-#ifdef HAVE_MPI
+
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -1396,11 +1280,9 @@ void CIncEulerSolver::Set_MPI_Primitive_Gradient(CGeometry *geometry, CConfig *c
         (config->GetMarker_All_SendRecv(iMarker) > 0)) {
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
-      
-#ifdef HAVE_MPI
+
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nPrimVarGrad*nDim;        nBufferR_Vector = nVertexR*nPrimVarGrad*nDim;
@@ -1417,22 +1299,9 @@ void CIncEulerSolver::Set_MPI_Primitive_Gradient(CGeometry *geometry, CConfig *c
             Buffer_Send_Gradient[iDim*nPrimVarGrad*nVertexS+iVar*nVertexS+iVertex] = node[iPoint]->GetGradient_Primitive(iVar, iDim);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Gradient, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Gradient, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nPrimVarGrad; iVar++)
-          for (iDim = 0; iDim < nDim; iDim++)
-            Buffer_Receive_Gradient[iDim*nPrimVarGrad*nVertexR+iVar*nVertexR+iVertex] = Buffer_Send_Gradient[iDim*nPrimVarGrad*nVertexR+iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Gradient;
@@ -1505,11 +1374,9 @@ void CIncEulerSolver::Set_MPI_Primitive_Limiter(CGeometry *geometry, CConfig *co
   *Buffer_Receive_Limit = NULL, *Buffer_Send_Limit = NULL;
   
   su2double *Limiter = new su2double [nPrimVarGrad];
-  
-#ifdef HAVE_MPI
+
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -1518,10 +1385,8 @@ void CIncEulerSolver::Set_MPI_Primitive_Limiter(CGeometry *geometry, CConfig *co
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nPrimVarGrad;        nBufferR_Vector = nVertexR*nPrimVarGrad;
@@ -1537,21 +1402,9 @@ void CIncEulerSolver::Set_MPI_Primitive_Limiter(CGeometry *geometry, CConfig *co
           Buffer_Send_Limit[iVar*nVertexS+iVertex] = node[iPoint]->GetLimiter_Primitive(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_Limit, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_Limit, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nPrimVarGrad; iVar++)
-          Buffer_Receive_Limit[iVar*nVertexR+iVertex] = Buffer_Send_Limit[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_Limit;
@@ -1635,9 +1488,7 @@ void CIncEulerSolver::SetNondimensionalization(CGeometry *geometry, CConfig *con
   unsigned short iDim;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   /*--- Local variables ---*/
   
@@ -2090,10 +1941,8 @@ void CIncEulerSolver::Preprocessing(CGeometry *geometry, CSolver **solver_contai
   
   unsigned long ErrorCounter = 0;
   
-#ifdef HAVE_MPI
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   unsigned long ExtIter = config->GetExtIter();
   bool adjoint          = config->GetContinuous_Adjoint();
@@ -2154,10 +2003,8 @@ void CIncEulerSolver::Preprocessing(CGeometry *geometry, CSolver **solver_contai
   /*--- Error message ---*/
   
   if (config->GetConsole_Output_Verb() == VERB_HIGH) {
-#ifdef HAVE_MPI
     unsigned long MyErrorCounter = ErrorCounter; ErrorCounter = 0;
     SU2_MPI::Allreduce(&MyErrorCounter, &ErrorCounter, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
-#endif
     if (iMesh == MESH_0) config->SetNonphysical_Points(ErrorCounter);
   }
   
@@ -2325,7 +2172,6 @@ void CIncEulerSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_contain
   /*--- Compute the max and the min dt (in parallel) ---*/
   
   if (config->GetConsole_Output_Verb() == VERB_HIGH) {
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Min_Delta_Time;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
@@ -2336,19 +2182,16 @@ void CIncEulerSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_contain
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MAX, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Max_Delta_Time = rbuf_time;
-#endif
   }
   
   /*--- For time-accurate simulations use the minimum delta time of the whole mesh (global) ---*/
   
   if (time_steping) {
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Global_Delta_Time;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Global_Delta_Time = rbuf_time;
-#endif
     for (iPoint = 0; iPoint < nPointDomain; iPoint++){
       
       /*--- Sets the regular CFL equal to the unsteady CFL ---*/
@@ -2372,13 +2215,11 @@ void CIncEulerSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_contain
   if ((dual_time) && (Iteration == 0) && (config->GetUnst_CFL() != 0.0) && (iMesh == MESH_0)) {
     Global_Delta_UnstTimeND = config->GetUnst_CFL()*Global_Delta_Time/config->GetCFL(iMesh);
     
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Global_Delta_UnstTimeND;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Global_Delta_UnstTimeND = rbuf_time;
-#endif
     config->SetDelta_UnstTimeND(Global_Delta_UnstTimeND);
   }
   
@@ -2554,11 +2395,7 @@ void CIncEulerSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_cont
   /*--- Warning message about non-physical reconstructions. ---*/
   
   if (config->GetConsole_Output_Verb() == VERB_HIGH) {
-#ifdef HAVE_MPI
     SU2_MPI::Reduce(&counter_local, &counter_global, 1, MPI_UNSIGNED_LONG, MPI_SUM, MASTER_NODE, MPI_COMM_WORLD);
-#else
-    counter_global = counter_local;
-#endif
     if (iMesh == MESH_0) config->SetNonphysical_Reconstr(counter_global);
   }
   
@@ -2942,9 +2779,7 @@ void CIncEulerSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) {
   Force[3] = {0.0,0.0,0.0};
   string Marker_Tag, Monitoring_Tag;
 
-#ifdef HAVE_MPI
   su2double MyAllBound_CD_Inv, MyAllBound_CL_Inv, MyAllBound_CSF_Inv, MyAllBound_CMx_Inv, MyAllBound_CMy_Inv, MyAllBound_CMz_Inv, MyAllBound_CFx_Inv, MyAllBound_CFy_Inv, MyAllBound_CFz_Inv, MyAllBound_CT_Inv, MyAllBound_CQ_Inv, *MySurface_CL_Inv = NULL, *MySurface_CD_Inv = NULL, *MySurface_CSF_Inv = NULL, *MySurface_CEff_Inv = NULL, *MySurface_CFx_Inv = NULL, *MySurface_CFy_Inv = NULL, *MySurface_CFz_Inv = NULL, *MySurface_CMx_Inv = NULL, *MySurface_CMy_Inv = NULL, *MySurface_CMz_Inv = NULL;
-#endif
 
   su2double Alpha           = config->GetAoA()*PI_NUMBER/180.0;
   su2double Beta            = config->GetAoS()*PI_NUMBER/180.0;
@@ -3155,8 +2990,6 @@ void CIncEulerSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) {
     }
   }
 
-#ifdef HAVE_MPI
-
   /*--- Add AllBound information using all the nodes ---*/
 
   MyAllBound_CD_Inv        = AllBound_CD_Inv;        AllBound_CD_Inv = 0.0;
@@ -3241,8 +3074,6 @@ void CIncEulerSolver::Pressure_Forces(CGeometry *geometry, CConfig *config) {
   delete [] MySurface_CFz_Inv;   delete [] MySurface_CMx_Inv;   delete [] MySurface_CMy_Inv;
   delete [] MySurface_CMz_Inv;
 
-#endif
-
   /*--- Update the total coefficients (note that all the nodes have the same value) ---*/
 
   Total_CD            = AllBound_CD_Inv;
@@ -3286,7 +3117,6 @@ void CIncEulerSolver::Momentum_Forces(CGeometry *geometry, CConfig *config) {
   string Marker_Tag, Monitoring_Tag;
   su2double MomentX_Force[3] = {0.0,0.0,0.0}, MomentY_Force[3] = {0.0,0.0,0.0}, MomentZ_Force[3] = {0.0,0.0,0.0};
 
-#ifdef HAVE_MPI
   su2double MyAllBound_CD_Mnt, MyAllBound_CL_Mnt, MyAllBound_CSF_Mnt,
   MyAllBound_CMx_Mnt, MyAllBound_CMy_Mnt, MyAllBound_CMz_Mnt,
   MyAllBound_CFx_Mnt, MyAllBound_CFy_Mnt, MyAllBound_CFz_Mnt, MyAllBound_CT_Mnt,
@@ -3295,7 +3125,6 @@ void CIncEulerSolver::Momentum_Forces(CGeometry *geometry, CConfig *config) {
   *MySurface_CEff_Mnt = NULL, *MySurface_CFx_Mnt = NULL, *MySurface_CFy_Mnt = NULL,
   *MySurface_CFz_Mnt = NULL,
   *MySurface_CMx_Mnt = NULL, *MySurface_CMy_Mnt = NULL,  *MySurface_CMz_Mnt = NULL;
-#endif
 
   su2double Alpha           = config->GetAoA()*PI_NUMBER/180.0;
   su2double Beta            = config->GetAoS()*PI_NUMBER/180.0;
@@ -3502,8 +3331,6 @@ void CIncEulerSolver::Momentum_Forces(CGeometry *geometry, CConfig *config) {
     }
   }
 
-#ifdef HAVE_MPI
-
   /*--- Add AllBound information using all the nodes ---*/
 
   MyAllBound_CD_Mnt        = AllBound_CD_Mnt;        AllBound_CD_Mnt = 0.0;
@@ -3587,8 +3414,6 @@ void CIncEulerSolver::Momentum_Forces(CGeometry *geometry, CConfig *config) {
   delete [] MySurface_CEff_Mnt;  delete [] MySurface_CFx_Mnt;   delete [] MySurface_CFy_Mnt;
   delete [] MySurface_CFz_Mnt;
   delete [] MySurface_CMx_Mnt;   delete [] MySurface_CMy_Mnt;  delete [] MySurface_CMz_Mnt;
-
-#endif
 
   /*--- Update the total coefficients (note that all the nodes have the same value) ---*/
 
@@ -4196,15 +4021,8 @@ void CIncEulerSolver::SetPrimitive_Limiter(CGeometry *geometry, CConfig *config)
       
     }
 
-#ifdef HAVE_MPI
     SU2_MPI::Allreduce(LocalMinPrimitive, GlobalMinPrimitive, nPrimVarGrad, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
     SU2_MPI::Allreduce(LocalMaxPrimitive, GlobalMaxPrimitive, nPrimVarGrad, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-#else
-    for (iVar = 0; iVar < nPrimVarGrad; iVar++) {
-      GlobalMinPrimitive[iVar] = LocalMinPrimitive[iVar];
-      GlobalMaxPrimitive[iVar] = LocalMaxPrimitive[iVar];
-    }
-#endif
     
     for (iEdge = 0; iEdge < geometry->GetnEdge(); iEdge++) {
       
@@ -4305,9 +4123,7 @@ void CIncEulerSolver::SetFarfield_AoA(CGeometry *geometry, CSolver **solver_cont
   bool Update_AoA             = false;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   if (ExtIter == 0) AoA_Counter = 0;
   
@@ -5222,45 +5038,11 @@ void CIncEulerSolver::SetFlow_Displacement(CGeometry **flow_geometry, CVolumetri
     unsigned long iVertex;
     su2double *Coord, VarCoord[3] = {0,0,0};
 
-  #ifndef HAVE_MPI
-    unsigned long iPoint_Donor, iPoint;
-    unsigned short iMarker;
-    su2double *CoordDonor, *DisplacementDonor;
-
-    for (iMarker = 0; iMarker < flow_config->GetnMarker_All(); iMarker++) {
-
-      if (flow_config->GetMarker_All_ZoneInterface(iMarker) != 0) {
-
-        for(iVertex = 0; iVertex < flow_geometry[MESH_0]->nVertex[iMarker]; iVertex++) {
-
-          iPoint = flow_geometry[MESH_0]->vertex[iMarker][iVertex]->GetNode();
-
-          iPoint_Donor = flow_geometry[MESH_0]->vertex[iMarker][iVertex]->GetDonorPoint();
-
-          Coord = flow_geometry[MESH_0]->node[iPoint]->GetCoord();
-
-          CoordDonor = fea_geometry[MESH_0]->node[iPoint_Donor]->GetCoord();
-
-          /*--- The displacements come from the predicted solution ---*/
-          
-          DisplacementDonor = fea_solution[MESH_0][FEA_SOL]->node[iPoint_Donor]->GetSolution_Pred();
-
-          for (iDim = 0; iDim < nDim; iDim++)
-
-            VarCoord[iDim] = (CoordDonor[iDim]+DisplacementDonor[iDim])-Coord[iDim];
-
-          flow_geometry[MESH_0]->vertex[iMarker][iVertex]->SetVarCoord(VarCoord);
-        }
-      }
-    }
-
-  #else
-
     int rank = MASTER_NODE;
     int size = SINGLE_NODE;
 
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
 
     unsigned long nLocalVertexStruct = 0, nLocalVertexFlow = 0;
 
@@ -5584,8 +5366,6 @@ void CIncEulerSolver::SetFlow_Displacement(CGeometry **flow_geometry, CVolumetri
 
   }
 
-  #endif
-
     flow_grid_movement->SetVolume_Deformation(flow_geometry[MESH_0], flow_config, true);
 
 }
@@ -5657,9 +5437,7 @@ void CIncEulerSolver::LoadRestart(CGeometry **geometry, CSolver ***solver, CConf
     Coord[iDim] = 0.0;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   int counter = 0;
   long iPoint_Local = 0; unsigned long iPoint_Global = 0;
@@ -5754,23 +5532,15 @@ void CIncEulerSolver::LoadRestart(CGeometry **geometry, CSolver ***solver, CConf
 
   if (iPoint_Global_Local < nPointDomain) { sbuf_NotMatching = 1; }
 
-#ifndef HAVE_MPI
-  rbuf_NotMatching = sbuf_NotMatching;
-#else
   SU2_MPI::Allreduce(&sbuf_NotMatching, &rbuf_NotMatching, 1, MPI_UNSIGNED_SHORT, MPI_SUM, MPI_COMM_WORLD);
-#endif
   if (rbuf_NotMatching != 0) {
     if (rank == MASTER_NODE) {
       cout << endl << "The solution file " << restart_filename.data() << " doesn't match with the mesh file!" << endl;
       cout << "It could be empty lines at the end of the file." << endl << endl;
     }
-#ifndef HAVE_MPI
-    exit(EXIT_FAILURE);
-#else
-    MPI_Barrier(MPI_COMM_WORLD);
-    MPI_Abort(MPI_COMM_WORLD,1);
-    MPI_Finalize();
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
+    SU2_MPI::Abort(MPI_COMM_WORLD,1);
+    SU2_MPI::Finalize();
   }
   
   /*--- Communicate the loaded solution on the fine grid before we transfer
@@ -5893,9 +5663,7 @@ CIncNSSolver::CIncNSSolver(CGeometry *geometry, CConfig *config, unsigned short 
   unsigned short direct_diff = config->GetDirectDiff();
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
   /*--- Check for a restart file to evaluate if there is a change in the angle of attack
    before computing all the non-dimesional quantities. ---*/
@@ -6377,10 +6145,8 @@ void CIncNSSolver::Preprocessing(CGeometry *geometry, CSolver **solver_container
   unsigned long iPoint, ErrorCounter = 0;
   su2double StrainMag = 0.0, Omega = 0.0, *Vorticity;
   
-#ifdef HAVE_MPI
   int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   unsigned long ExtIter     = config->GetExtIter();
   bool adjoint              = config->GetContinuous_Adjoint();
@@ -6451,7 +6217,6 @@ void CIncNSSolver::Preprocessing(CGeometry *geometry, CSolver **solver_container
   
   if (config->GetConsole_Output_Verb() == VERB_HIGH) {
     
-#ifdef HAVE_MPI
     unsigned long MyErrorCounter = ErrorCounter; ErrorCounter = 0;
     su2double MyOmega_Max = Omega_Max; Omega_Max = 0.0;
     su2double MyStrainMag_Max = StrainMag_Max; StrainMag_Max = 0.0;
@@ -6459,7 +6224,6 @@ void CIncNSSolver::Preprocessing(CGeometry *geometry, CSolver **solver_container
     SU2_MPI::Allreduce(&MyErrorCounter, &ErrorCounter, 1, MPI_UNSIGNED_LONG, MPI_SUM, MPI_COMM_WORLD);
     SU2_MPI::Allreduce(&MyStrainMag_Max, &StrainMag_Max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
     SU2_MPI::Allreduce(&MyOmega_Max, &Omega_Max, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-#endif
     
     if (iMesh == MESH_0) {
       config->SetNonphysical_Points(ErrorCounter);
@@ -6658,7 +6422,6 @@ void CIncNSSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_container,
   
   /*--- Compute the max and the min dt (in parallel) ---*/
   if (config->GetConsole_Output_Verb() == VERB_HIGH) {
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Min_Delta_Time;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
@@ -6669,18 +6432,15 @@ void CIncNSSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_container,
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MAX, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Max_Delta_Time = rbuf_time;
-#endif
   }
   
   /*--- For exact time solution use the minimum delta time of the whole mesh ---*/
   if (config->GetUnsteady_Simulation() == TIME_STEPPING) {
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Global_Delta_Time;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Global_Delta_Time = rbuf_time;
-#endif
     for (iPoint = 0; iPoint < nPointDomain; iPoint++)
       node[iPoint]->SetDelta_Time(Global_Delta_Time);
   }
@@ -6690,13 +6450,11 @@ void CIncNSSolver::SetTime_Step(CGeometry *geometry, CSolver **solver_container,
   if ((dual_time) && (Iteration == 0) && (config->GetUnst_CFL() != 0.0) && (iMesh == MESH_0)) {
     Global_Delta_UnstTimeND = config->GetUnst_CFL()*Global_Delta_Time/config->GetCFL(iMesh);
     
-#ifdef HAVE_MPI
     su2double rbuf_time, sbuf_time;
     sbuf_time = Global_Delta_UnstTimeND;
     SU2_MPI::Reduce(&sbuf_time, &rbuf_time, 1, MPI_DOUBLE, MPI_MIN, MASTER_NODE, MPI_COMM_WORLD);
     SU2_MPI::Bcast(&rbuf_time, 1, MPI_DOUBLE, MASTER_NODE, MPI_COMM_WORLD);
     Global_Delta_UnstTimeND = rbuf_time;
-#endif
     config->SetDelta_UnstTimeND(Global_Delta_UnstTimeND);
   }
   
@@ -6779,9 +6537,7 @@ void CIncNSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {
   Grad_Vel[3][3] = {{0.0, 0.0, 0.0},{0.0, 0.0, 0.0},{0.0, 0.0, 0.0}},
   delta[3][3] = {{1.0, 0.0, 0.0},{0.0,1.0,0.0},{0.0,0.0,1.0}};
 
-#ifdef HAVE_MPI
   su2double MyAllBound_CD_Visc, MyAllBound_CL_Visc, MyAllBound_CSF_Visc, MyAllBound_CMx_Visc, MyAllBound_CMy_Visc, MyAllBound_CMz_Visc, MyAllBound_CFx_Visc, MyAllBound_CFy_Visc, MyAllBound_CFz_Visc, MyAllBound_CT_Visc, MyAllBound_CQ_Visc, MyAllBound_HF_Visc, MyAllBound_MaxHF_Visc, *MySurface_CL_Visc = NULL, *MySurface_CD_Visc = NULL, *MySurface_CSF_Visc = NULL, *MySurface_CEff_Visc = NULL, *MySurface_CFx_Visc = NULL, *MySurface_CFy_Visc = NULL, *MySurface_CFz_Visc = NULL, *MySurface_CMx_Visc = NULL, *MySurface_CMy_Visc = NULL, *MySurface_CMz_Visc = NULL;
-#endif
 
   string Marker_Tag, Monitoring_Tag;
 
@@ -7026,8 +6782,6 @@ void CIncNSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {
   AllBound_MaxHF_Visc = pow(AllBound_MaxHF_Visc, 1.0/MaxNorm);
 
 
-#ifdef HAVE_MPI
-
   /*--- Add AllBound information using all the nodes ---*/
 
   MyAllBound_CD_Visc        = AllBound_CD_Visc;                      AllBound_CD_Visc = 0.0;
@@ -7117,8 +6871,6 @@ void CIncNSSolver::Friction_Forces(CGeometry *geometry, CConfig *config) {
   delete [] MySurface_CEff_Visc;  delete [] MySurface_CFx_Visc;   delete [] MySurface_CFy_Visc;
   delete [] MySurface_CFz_Visc;   delete [] MySurface_CMx_Visc;   delete [] MySurface_CMy_Visc;
   delete [] MySurface_CMz_Visc;
-
-#endif
 
   /*--- Update the total coefficients (note that all the nodes have the same value)---*/
 

@@ -414,11 +414,9 @@ void COutput::SetTecplotASCII(CConfig *config, CGeometry *geometry, CSolver **so
 void COutput::SetTecplotASCII_LowMemory(CConfig *config, CGeometry *geometry, CSolver **solver, char mesh_filename[MAX_STRING_SIZE], bool surf_sol) {
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
   int size = SINGLE_NODE;
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   unsigned long iElem, iPoint;
   unsigned short iVar;
@@ -1053,9 +1051,7 @@ void COutput::SetCSV_MeshASCII(CConfig *config, CGeometry *geometry) {
 	ofstream csv_File;
 
 	int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+	SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
 
 	if (nDim == 3) {
 
@@ -1141,10 +1137,8 @@ void COutput::WriteTecplotASCII_Parallel(CConfig *config, CGeometry *geometry, C
   
   int rank = MASTER_NODE;
   int size = SINGLE_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
   
   char cstr[200], buffer[50];
   string filename;
@@ -1247,9 +1241,7 @@ void COutput::WriteTecplotASCII_Parallel(CConfig *config, CGeometry *geometry, C
     
   }
   
-#ifdef HAVE_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
+  SU2_MPI::Barrier(MPI_COMM_WORLD);
   
   /*--- Each processor opens the file. ---*/
   
@@ -1279,9 +1271,7 @@ void COutput::WriteTecplotASCII_Parallel(CConfig *config, CGeometry *geometry, C
       }
     }
     Tecplot_File.flush();
-#ifdef HAVE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
   }
   
   /*--- Write connectivity data. ---*/
@@ -1366,9 +1356,7 @@ void COutput::WriteTecplotASCII_Parallel(CConfig *config, CGeometry *geometry, C
       
     }
     Tecplot_File.flush();
-#ifdef HAVE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+    SU2_MPI::Barrier(MPI_COMM_WORLD);
   }
   
   Tecplot_File.close();

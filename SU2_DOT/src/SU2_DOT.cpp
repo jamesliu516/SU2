@@ -47,14 +47,10 @@ int main(int argc, char *argv[]) {
 
   /*--- MPI initialization, and buffer setting ---*/
   
-#ifdef HAVE_MPI
   SU2_MPI::Init(&argc,&argv);
   SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
-  MPI_Comm_rank(MPICommunicator,&rank);
-  MPI_Comm_size(MPICommunicator,&size);
-#else
-  SU2_Comm MPICommunicator(0);
-#endif
+  SU2_MPI::Comm_rank(MPICommunicator,&rank);
+  SU2_MPI::Comm_size(MPICommunicator,&size);
   
   /*--- Pointer to different structures that will be used throughout the entire code ---*/
   
@@ -294,10 +290,8 @@ int main(int argc, char *argv[]) {
     cout << endl <<"------------------------- Exit Success (SU2_DOT) ------------------------" << endl << endl;
   
   /*--- Finalize MPI parallelization ---*/
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
+
+  SU2_MPI::Finalize();
   
   return EXIT_SUCCESS;
   
@@ -313,9 +307,7 @@ void SetProjection_FD(CGeometry *geometry, CConfig *config, CSurfaceMovement *su
   CFreeFormDefBox **FFDBox;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD,&rank);
   
   nDV = config->GetnDV();
   
@@ -544,11 +536,8 @@ void SetProjection_FD(CGeometry *geometry, CConfig *config, CSurfaceMovement *su
         
       }
       
-#ifdef HAVE_MPI
     SU2_MPI::Allreduce(&my_Gradient, &localGradient, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-    localGradient = my_Gradient;
-#endif
+
     Gradient[iDV][0] += localGradient;
     }
   }
@@ -562,10 +551,8 @@ void SetProjection_AD(CGeometry *geometry, CConfig *config, CSurfaceMovement *su
   unsigned long iVertex, nVertex, iPoint;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-#endif
-  
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD,&rank);
+
   nMarker = config->GetnMarker_All();
   nDim    = geometry->GetnDim();
   nDV     = config->GetnDV();
@@ -649,11 +636,9 @@ void SetProjection_AD(CGeometry *geometry, CConfig *config, CSurfaceMovement *su
     for (iDV_Value = 0; iDV_Value < nDV_Value; iDV_Value++){
       DV_Value = config->GetDV_Value(iDV, iDV_Value);
       my_Gradient = SU2_TYPE::GetDerivative(DV_Value);
-#ifdef HAVE_MPI
-    SU2_MPI::Allreduce(&my_Gradient, &localGradient, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-#else
-      localGradient = my_Gradient;
-#endif
+
+      SU2_MPI::Allreduce(&my_Gradient, &localGradient, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+
       /*--- Angle of Attack design variable (this is different,
        the value comes form the input file) ---*/
       
@@ -675,9 +660,7 @@ void OutputGradient(su2double** Gradient, CConfig* config, ofstream& Gradient_fi
   unsigned short nDV, iDV, iDV_Value, nDV_Value;
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD,&rank);
   
   nDV = config->GetnDV();
   

@@ -43,16 +43,12 @@ int main(int argc, char *argv[]) {
   
   /*--- MPI initialization, and buffer setting ---*/
   
-#ifdef HAVE_MPI
   int  buffsize;
   char *buffptr;
   SU2_MPI::Init(&argc, &argv);
-  MPI_Buffer_attach( malloc(BUFSIZE), BUFSIZE );
+  SU2_MPI::Buffer_attach( malloc(BUFSIZE), BUFSIZE );
   SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
-#else
-  SU2_MPI::Comm MPICommunicator(0);
-#endif
-  
+
   /*--- Create a pointer to the main SU2 Driver ---*/
   
   CDriver *driver = NULL;
@@ -152,11 +148,9 @@ int main(int argc, char *argv[]) {
 
   /*--- Finalize MPI parallelization ---*/
 
-#ifdef HAVE_MPI
-  MPI_Buffer_detach(&buffptr, &buffsize);
+  SU2_MPI::Buffer_detach(&buffptr, &buffsize);
   free(buffptr);
-  MPI_Finalize();
-#endif
+  SU2_MPI::Finalize();
   
   return EXIT_SUCCESS;
   

@@ -97,9 +97,7 @@ CFEM_ElasticitySolver::CFEM_ElasticitySolver(CGeometry *geometry, CConfig *confi
   bool incompressible = (config->GetMaterialCompressibility() == INCOMPRESSIBLE_MAT);
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   
   su2double E = config->GetElasticyMod();
   
@@ -407,10 +405,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution(CGeometry *geometry, CConfig *confi
   if (dynamic) nSolVar = 3 * nVar;
   else nSolVar = nVar;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -419,10 +415,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution(CGeometry *geometry, CConfig *confi
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nSolVar;     nBufferR_Vector = nVertexR*nSolVar;
@@ -444,25 +438,9 @@ void CFEM_ElasticitySolver::Set_MPI_Solution(CGeometry *geometry, CConfig *confi
         }
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-        if (dynamic) {
-          for (iVar = nVar; iVar < 3*nVar; iVar++)
-            Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-        }
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_U;
@@ -512,10 +490,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *c
   
   nSolVar = 3 * nVar;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -524,10 +500,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *c
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nSolVar;     nBufferR_Vector = nVertexR*nSolVar;
@@ -546,21 +520,9 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *c
         }
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nSolVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_U;
@@ -600,10 +562,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_DispOnly(CGeometry *geometry, CConf
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive_U = NULL, *Buffer_Send_U = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     
@@ -612,10 +572,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_DispOnly(CGeometry *geometry, CConf
       
       MarkerS = iMarker;  MarkerR = iMarker+1;
       
-#ifdef HAVE_MPI
       send_to = config->GetMarker_All_SendRecv(MarkerS)-1;
       receive_from = abs(config->GetMarker_All_SendRecv(MarkerR))-1;
-#endif
       
       nVertexS = geometry->nVertex[MarkerS];  nVertexR = geometry->nVertex[MarkerR];
       nBufferS_Vector = nVertexS*nVar;         nBufferR_Vector = nVertexR*nVar;
@@ -631,21 +589,9 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_DispOnly(CGeometry *geometry, CConf
           Buffer_Send_U[iVar*nVertexS+iVertex] = node[iPoint]->GetSolution(iVar);
       }
       
-#ifdef HAVE_MPI
-      
       /*--- Send/Receive information using Sendrecv ---*/
       SU2_MPI::Sendrecv(Buffer_Send_U, nBufferS_Vector, MPI_DOUBLE, send_to, 0,
                         Buffer_Receive_U, nBufferR_Vector, MPI_DOUBLE, receive_from, 0, MPI_COMM_WORLD, &status);
-      
-#else
-      
-      /*--- Receive information without MPI ---*/
-      for (iVertex = 0; iVertex < nVertexR; iVertex++) {
-        for (iVar = 0; iVar < nVar; iVar++)
-          Buffer_Receive_U[iVar*nVertexR+iVertex] = Buffer_Send_U[iVar*nVertexR+iVertex];
-      }
-      
-#endif
       
       /*--- Deallocate send buffer ---*/
       delete [] Buffer_Send_U;
@@ -682,10 +628,8 @@ void CFEM_ElasticitySolver::Set_MPI_Solution_Pred(CGeometry *geometry, CConfig *
   unsigned long iVertex, iPoint, nVertexS, nVertexR, nBufferS_Vector, nBufferR_Vector;
   su2double *Buffer_Receive_U = NULL, *Buffer_Send_U = NULL;
   
-#ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
-#endif
+  SU2_MPI::Status status;
   
   for (iMarker = 0; iMarker < nMarker; iMarker++) {
     

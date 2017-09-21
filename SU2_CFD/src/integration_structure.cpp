@@ -452,11 +452,9 @@ void CIntegration::Convergence_Monitoring(CGeometry *geometry, CConfig *config, 
   
   if ((In_NoDualTime || In_DualTime_0 || In_DualTime_1) && (In_NoDualTime || In_DualTime_2 || In_DualTime_3)) {
     
-#ifdef HAVE_MPI
     int size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
     
     bool Already_Converged = Convergence;
     
@@ -524,8 +522,6 @@ void CIntegration::Convergence_Monitoring(CGeometry *geometry, CConfig *config, 
     
     /*--- Apply the same convergence criteria to all the processors ---*/
     
-#ifdef HAVE_MPI
-    
     unsigned short *sbuf_conv = NULL, *rbuf_conv = NULL;
     sbuf_conv = new unsigned short[1]; sbuf_conv[0] = 0;
     rbuf_conv = new unsigned short[1]; rbuf_conv[0] = 0;
@@ -551,20 +547,15 @@ void CIntegration::Convergence_Monitoring(CGeometry *geometry, CConfig *config, 
     delete [] sbuf_conv;
     delete [] rbuf_conv;
     
-#endif
     
     /*--- Stop the simulation in case a nan appears, do not save the solution ---*/
     
     if (monitor != monitor) {
       if (rank == MASTER_NODE)
       cout << "\n !!! Error: SU2 has diverged. Now exiting... !!! \n" << endl;
-#ifndef HAVE_MPI
-      exit(EXIT_DIVERGENCE);
-#else
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
-#endif
+      SU2_MPI::Barrier(MPI_COMM_WORLD);
+      SU2_MPI::Abort(MPI_COMM_WORLD,1);
+      SU2_MPI::Finalize();
     }
     
     if (config->GetFinestMesh() != MESH_0 ) Convergence = false;
@@ -598,7 +589,6 @@ void CIntegration::SetDualTime_Solver(CGeometry *geometry, CSolver *solver, CCon
     
     /*--- Also communicate plunge and pitch to the master node. Needed for output in case of parallel run ---*/
     
-#ifdef HAVE_MPI
     su2double plunge, pitch, *plunge_all = NULL, *pitch_all = NULL;
     unsigned short iMarker, iMarker_Monitoring;
     unsigned long iProcessor, owner, *owner_all = NULL;
@@ -606,8 +596,8 @@ void CIntegration::SetDualTime_Solver(CGeometry *geometry, CSolver *solver, CCon
     string Marker_Tag, Monitoring_Tag;
   int rank, nProcessor;
     
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &nProcessor);
+    SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+    SU2_MPI::Comm_size(MPI_COMM_WORLD, &nProcessor);
 
     /*--- Only if mater node allocate memory ---*/
     
@@ -659,7 +649,6 @@ void CIntegration::SetDualTime_Solver(CGeometry *geometry, CSolver *solver, CCon
       delete [] pitch_all;
       delete [] owner_all;
     }
-#endif
   }
   
 }
@@ -739,12 +728,9 @@ void CIntegration::Convergence_Monitoring_FEM(CGeometry *geometry, CConfig *conf
   su2double Reference_UTOL, Reference_RTOL, Reference_ETOL;
   su2double Residual_UTOL, Residual_RTOL, Residual_ETOL;
   
-#ifdef HAVE_MPI
-  int rank = MASTER_NODE;
-  int size = SINGLE_NODE;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  int size, rank;
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
   
   bool Already_Converged = Convergence;
   
@@ -769,9 +755,7 @@ void CIntegration::Convergence_Monitoring_FEM(CGeometry *geometry, CConfig *conf
   
   
   /*--- Apply the same convergence criteria to all the processors ---*/
-  
-#ifdef HAVE_MPI
-  
+
   unsigned short *sbuf_conv = NULL, *rbuf_conv = NULL;
   sbuf_conv = new unsigned short[1]; sbuf_conv[0] = 0;
   rbuf_conv = new unsigned short[1]; rbuf_conv[0] = 0;
@@ -797,19 +781,16 @@ void CIntegration::Convergence_Monitoring_FEM(CGeometry *geometry, CConfig *conf
   delete [] sbuf_conv;
   delete [] rbuf_conv;
   
-#endif
-  
 }
 
 
 void CIntegration::Convergence_Monitoring_FSI(CGeometry *fea_geometry, CConfig *fea_config, CSolver *fea_solver, unsigned long iFSIIter) {
   
   int rank = MASTER_NODE;
-#ifdef HAVE_MPI
   int size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
+
   
   su2double FEA_check[2] = {0.0, 0.0};
   su2double magResidualFSI = 0.0, logResidualFSI_initial = 0.0, logResidualFSI = 0.0;
@@ -881,13 +862,9 @@ void CIntegration::Convergence_Monitoring_FSI(CGeometry *fea_geometry, CConfig *
     }
     
     // We need to communicate the maximum residual throughout the different processors
-    
-#ifdef HAVE_MPI
+
     /*--- We sum the squares of the norms across the different processors ---*/
     SU2_MPI::Allreduce(&deltaURes, &deltaURes_recv, 1, MPI_DOUBLE, MPI_MAX, MPI_COMM_WORLD);
-#else
-    deltaURes_recv         = deltaURes;
-#endif
     
     if (writeHistFSI && (rank == MASTER_NODE)) { historyFile_FSI << setiosflags(ios::scientific) << setprecision(4) << deltaURes_recv << "," ;}
     
@@ -924,8 +901,6 @@ void CIntegration::Convergence_Monitoring_FSI(CGeometry *fea_geometry, CConfig *
   
   /*--- Apply the same convergence criteria to all the processors ---*/
   
-#ifdef HAVE_MPI
-  
   unsigned short *sbuf_conv = NULL, *rbuf_conv = NULL;
   sbuf_conv = new unsigned short[1]; sbuf_conv[0] = 0;
   rbuf_conv = new unsigned short[1]; rbuf_conv[0] = 0;
@@ -950,8 +925,6 @@ void CIntegration::Convergence_Monitoring_FSI(CGeometry *fea_geometry, CConfig *
   
   delete [] sbuf_conv;
   delete [] rbuf_conv;
-  
-#endif
   
   if (rank == MASTER_NODE) {
     

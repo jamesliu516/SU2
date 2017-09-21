@@ -61,14 +61,10 @@ int main(int argc, char *argv[]) {
   
   /*--- MPI initialization ---*/
   
-#ifdef HAVE_MPI
   SU2_MPI::Init(&argc,&argv);
   SU2_MPI::Comm MPICommunicator(MPI_COMM_WORLD);
-  MPI_Comm_rank(MPICommunicator,&rank);
-  MPI_Comm_size(MPICommunicator,&size);
-#else
-  SU2_Comm MPICommunicator(0);
-#endif
+  SU2_MPI::Comm_rank(MPICommunicator,&rank);
+  SU2_MPI::Comm_size(MPICommunicator,&size);
   
   /*--- Pointer to different structures that will be used throughout the entire code ---*/
   
@@ -708,13 +704,9 @@ int main(int argc, char *argv[]) {
           cout << "The finite difference steps is zero!!" << endl;
           cout << "Press any key to exit..." << endl;
           cin.get();
-#ifdef HAVE_MPI
-          MPI_Barrier(MPI_COMM_WORLD);
-          MPI_Abort(MPI_COMM_WORLD,1);
-          MPI_Finalize();
-#else
-          exit(EXIT_FAILURE);
-#endif
+          SU2_MPI::Barrier(MPI_COMM_WORLD);
+          SU2_MPI::Abort(MPI_COMM_WORLD,1);
+          SU2_MPI::Finalize();
         }
         
         if (MoveSurface) {
@@ -1019,10 +1011,8 @@ int main(int argc, char *argv[]) {
   
   
   /*--- Finalize MPI parallelization ---*/
-  
-#ifdef HAVE_MPI
-  MPI_Finalize();
-#endif
+
+  SU2_MPI::Finalize();
   
   return EXIT_SUCCESS;
   

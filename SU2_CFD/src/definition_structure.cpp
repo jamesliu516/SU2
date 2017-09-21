@@ -50,10 +50,8 @@ void Partition_Analysis(CGeometry *geometry, CConfig *config) {
   int rank = MASTER_NODE;
   int size = SINGLE_NODE;
   
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
   
   nPointTotal = geometry->GetnPoint();
   nPointGhost = geometry->GetnPoint() - geometry->GetnPointDomain();
@@ -127,9 +125,8 @@ void Partition_Analysis(CGeometry *geometry, CConfig *config) {
     Profile_File << "\"Rank\", \"nNeighbors\", \"nPointTotal\", \"nEdge\", \"nPointGhost\", \"nSendTotal\", \"nRecvTotal\", \"nElemTotal\", \"nElemBoundary\", \"nElemHalo\", \"nnz\"" << endl;
     Profile_File.close();
   }
-#ifdef HAVE_MPI
-  MPI_Barrier(MPI_COMM_WORLD);
-#endif
+
+  SU2_MPI::Barrier(MPI_COMM_WORLD);
   
   /*--- Loop through the map and write the results to the file ---*/
   
@@ -139,9 +136,7 @@ void Partition_Analysis(CGeometry *geometry, CConfig *config) {
       Profile_File << rank << ", " << nNeighbors << ", " << nPointTotal << ", " << nEdge << "," << nPointGhost << ", " << nSendTotal << ", " << nRecvTotal << ", " << nElemTotal << "," << nElemBound << ", " << nElemHalo << ", " << nnz << endl;
       Profile_File.close();
     }
-#ifdef HAVE_MPI
-    MPI_Barrier(MPI_COMM_WORLD);
-#endif
+ SU2_MPI::Barrier(MPI_COMM_WORLD);
   }
   
   delete [] isHalo;
