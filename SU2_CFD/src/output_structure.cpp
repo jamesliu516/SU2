@@ -3285,8 +3285,8 @@ void COutput::MergeBaselineSolution(CConfig *config, CGeometry *geometry, CSolve
   /*--- MPI preprocessing ---*/
   
   int rank, nProcessor, iProcessor;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &nProcessor);
+  SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &nProcessor);
   
   /*--- Local variables needed for merging with MPI ---*/
   
@@ -7973,7 +7973,7 @@ void COutput::SpecialOutput_SonicBoom(CSolver *solver, CGeometry *geometry, CCon
   if (rank == MASTER_NODE) cout << endl << "Writing Equivalent Area files.";
   
   int nProcessor;
-  MPI_Comm_size(MPI_COMM_WORLD, &nProcessor);
+  SU2_MPI::Comm_size(MPI_COMM_WORLD, &nProcessor);
   
   unsigned long nLocalVertex_NearField = 0, MaxLocalVertex_NearField = 0;
   int iProcessor;
@@ -12457,7 +12457,7 @@ void COutput::SortSurfaceConnectivity(CConfig *config, CGeometry *geometry, unsi
   SU2_MPI::Comm_rank(MPI_COMM_WORLD, &rank);
   SU2_MPI::Comm_size(MPI_COMM_WORLD, &size);
   SU2_MPI::Request *send_req, *recv_req;
-  MPI_Status status;
+  SU2_MPI::Status status;
   int ind;
   
   /*--- Store the local number of this element type and the number of nodes
@@ -13143,7 +13143,7 @@ void COutput::SortOutputData(CConfig *config, CGeometry *geometry) {
    all processors. After this communication, each proc knows how
    many cells it will receive from each other processor. ---*/
   
-  MPI_Alltoall(&(nPoint_Send[1]), 1, MPI_INT,
+  SU2_MPI::Alltoall(&(nPoint_Send[1]), 1, MPI_INT,
                &(nPoint_Recv[1]), 1, MPI_INT, MPI_COMM_WORLD);
   
   /*--- Prepare to send coordinates. First check how many
@@ -14478,7 +14478,7 @@ void COutput::SortOutputData_Surface(CConfig *config, CGeometry *geometry) {
    all processors. After this communication, each proc knows how
    many cells it will receive from each other processor. ---*/
   
-  MPI_Alltoall(&(nElem_Send[1]), 1, MPI_INT,
+  SU2_MPI::Alltoall(&(nElem_Send[1]), 1, MPI_INT,
                &(nElem_Recv[1]), 1, MPI_INT, MPI_COMM_WORLD);
   
   /*--- Prepare to send connectivities. First check how many
