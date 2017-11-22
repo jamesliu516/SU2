@@ -596,12 +596,16 @@ static const map<string, ENUM_UPWIND> Upwind_Map = CCreateMap<string, ENUM_UPWIN
 enum ENUM_SPATIAL_ORDER {
   FIRST_ORDER = 0,        /*!< \brief First order */
   SECOND_ORDER = 1,        /*!< \brief Second order. */
-  SECOND_ORDER_LIMITER = 2 /*!< \brief Second order with limiter. */
+  SECOND_ORDER_LIMITER = 2, /*!< \brief Second order with limiter. */
+  THIRD_ORDER_UMUSCL = 30,  /*!< \brief UMUSCL third order. */
+  THIRD_ORDER_UMUSCL_LIMITER = 31  /*!< \brief UMUSCL third order with limiter. */
 };
 static const map<string, ENUM_SPATIAL_ORDER> SpatialOrder_Map = CCreateMap<string, ENUM_SPATIAL_ORDER>
 ("1ST_ORDER", FIRST_ORDER)
 ("2ND_ORDER", SECOND_ORDER)
-("2ND_ORDER_LIMITER", SECOND_ORDER_LIMITER);
+("2ND_ORDER_LIMITER", SECOND_ORDER_LIMITER)
+("3RD_ORDER_UMUSCL", THIRD_ORDER_UMUSCL)
+("3RD_ORDER_UMUSCL_LIMITER", THIRD_ORDER_UMUSCL_LIMITER);
 
 /*!
  * \brief types of slope limiters
