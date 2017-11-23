@@ -3093,7 +3093,15 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
   
   if ((Kind_ConvNumScheme_AdjFlow == SPACE_CENTERED) && (Kind_Centered_AdjFlow == JST) && (SpatialOrder_AdjFlow == SECOND_ORDER_LIMITER))
     SpatialOrder_AdjFlow = SECOND_ORDER;
-  
+
+ /*--- Check for 3rd order w/ limiting for JST and correct ---*/
+    
+  if ((Kind_ConvNumScheme_Flow == SPACE_CENTERED) && (Kind_Centered_Flow == JST) && (SpatialOrder_Flow == THIRD_ORDER_UMUSCL_LIMITER))
+    SpatialOrder_Flow = THIRD_ORDER_UMUSCL;
+    
+  if ((Kind_ConvNumScheme_AdjFlow == SPACE_CENTERED) && (Kind_Centered_AdjFlow == JST) && (SpatialOrder_AdjFlow == THIRD_ORDER_UMUSCL_LIMITER))
+    SpatialOrder_AdjFlow = THIRD_ORDER_UMUSCL;
+    
   delete [] tmp_smooth;
   
 }
