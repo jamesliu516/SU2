@@ -4148,6 +4148,18 @@ void CConfig::SetOutput(unsigned short val_software, unsigned short val_izone) {
                 break;
             }
             break;
+            case THIRD_ORDER_UMUSCL: cout << "Third order integration." << endl; break;
+            case THIRD_ORDER_UMUSCL_LIMITER: cout << "Third order integration with slope limiter." << endl;
+                switch (Kind_SlopeLimit_Flow) {
+                    case VENKATAKRISHNAN:
+                        cout << "Venkatakrishnan slope-limiting method, with constant: " << LimiterCoeff <<". "<< endl;
+                        cout << "The reference element size is: " << RefElemLength <<". "<< endl;
+                        break;
+                    case BARTH_JESPERSEN:
+                        cout << "Barth-Jespersen slope-limiting method." << endl;
+                        break;
+                }
+                break;
         }
 			}
 
