@@ -2649,6 +2649,8 @@ protected:
   
   su2double *Primitive;  /*!< \brief Primitive variables (T, vx, vy, vz, P, rho, h, c) in compressible flows. */
   su2double **Gradient_Primitive;  /*!< \brief Gradient of the primitive variables (T, vx, vy, vz, P, rho). */
+  su2double **Gradient2_Primitive;  /*!< \brief The second order derivatives of the primitive variables (T, vx, vy, vz, P, rho). That is the Gradient of Gradient. */
+
   su2double *Limiter_Primitive;    /*!< \brief Limiter of the primitive variables (T, vx, vy, vz, P, rho). */
   
   /*--- Secondary variable definition ---*/
