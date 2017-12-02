@@ -476,6 +476,7 @@ private:
   unsigned short nLocationStations,      /*!< \brief Number of section cuts to make when outputting mesh and cp . */
   nWingStations;               /*!< \brief Number of section cuts to make when calculating internal volume. */
   su2double* Kappa_Flow,           /*!< \brief Numerical dissipation coefficients for the flow equations. */
+  *Kappa_Umuscl3_Flow,      /*!< \brief Numerical 3rd order UMUSCL coefficients for the flow equations. */
   *Kappa_AdjFlow;                  /*!< \brief Numerical dissipation coefficients for the linearized equations. */
   su2double* FFD_Axis;       /*!< \brief Numerical dissipation coefficients for the adjoint equations. */
   su2double Kappa_1st_AdjFlow,	/*!< \brief JST 1st order dissipation coefficient for adjoint flow equations (coarse multigrid levels). */
@@ -484,6 +485,9 @@ private:
   Kappa_1st_Flow,			/*!< \brief JST 1st order dissipation coefficient for flow equations (coarse multigrid levels). */
   Kappa_2nd_Flow,			/*!< \brief JST 2nd order dissipation coefficient for flow equations. */
   Kappa_4th_Flow;			/*!< \brief JST 4th order dissipation coefficient for flow equations. */
+  su2double Kappa_k_Umuscl3_Flow,     /*!< \brief 3rd order UMUSCL coefficient of k for flow equations. */
+  Kappa_k3_Umuscl3_Flow,            /*!< \brief 3rd order UMUSCL coefficient of k3 for flow equations. */
+    Kappa_delta_Umuscl3_FLow;    /*!< \brief 3rd order UMUSCL coefficient of delta (introduce low damping) for flow equations. */
   
   su2double Min_Beta_RoeTurkel,		/*!< \brief Minimum value of Beta for the Roe-Turkel low Mach preconditioner. */
   Max_Beta_RoeTurkel;		/*!< \brief Maximum value of Beta for the Roe-Turkel low Mach preconditioner. */
@@ -814,6 +818,7 @@ private:
   *default_eng_val,           /*!< \brief Default engine box array values for the COption class. */
   *default_cfl_adapt,         /*!< \brief Default CFL adapt param array for the COption class. */
   *default_ad_coeff_flow,     /*!< \brief Default artificial dissipation (flow) array for the COption class. */
+  *default_umuscl3_coeff_flow, /*!< \brief Default 3rd order UMUSCL (flow) array for the COption class. */
   *default_ad_coeff_adj,      /*!< \brief Default artificial dissipation (adjoint) array for the COption class. */
   *default_obj_coeff,         /*!< \brief Default objective array for the COption class. */
   *default_geo_loc,           /*!< \brief Default SU2_GEO section locations array for the COption class. */

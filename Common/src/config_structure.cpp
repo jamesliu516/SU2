@@ -395,7 +395,8 @@ void CConfig::SetPointersNull(void) {
   CFL                 = NULL;
   HTP_Axis = NULL;
   PlaneTag            = NULL;
-  Kappa_Flow	      = NULL;    
+  Kappa_Flow	      = NULL;
+    Kappa_Umuscl3_Flow  =NULL;
   Kappa_AdjFlow       = NULL;
   Section_WingBounds    = NULL;
   ParamDV             = NULL;     
@@ -443,6 +444,7 @@ void CConfig::SetPointersNull(void) {
   default_eng_val       = NULL;
   default_cfl_adapt     = NULL;
   default_ad_coeff_flow = NULL;
+  default_umuscl3_coeff_flow=NULL;
   default_ad_coeff_adj  = NULL;
   default_obj_coeff     = NULL;
   default_geo_loc       = NULL;
@@ -510,6 +512,7 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   default_eng_val       = new su2double[5];
   default_cfl_adapt     = new su2double[4];
   default_ad_coeff_flow = new su2double[3];
+    default_umuscl3_coeff_flow=new su2double[3];
   default_ad_coeff_adj  = new su2double[3];
   default_obj_coeff     = new su2double[5];
   default_geo_loc       = new su2double[2];
