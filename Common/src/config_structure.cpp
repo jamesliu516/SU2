@@ -1062,7 +1062,11 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   default_ad_coeff_flow[0] = 0.15; default_ad_coeff_flow[1] = 0.5; default_ad_coeff_flow[2] = 0.02;
   /*!\brief AD_COEFF_FLOW \n DESCRIPTION: 1st, 2nd and 4th order artificial dissipation coefficients \ingroup Config*/
   addDoubleArrayOption("AD_COEFF_FLOW", 3, Kappa_Flow, default_ad_coeff_flow);
-
+    
+    default_umuscl3_coeff_flow[0]=-1.0/6; default_umuscl3_coeff_flow[1]=-4.0/3;  default_umuscl3_coeff_flow[2]=1.0e-10;
+    /*!\brief CONV_NUM_METHOD_ADJFLOW \n  DESCRIPTION: UMUSCL3 coefficients kappa=-1.0/6, kappa_3=-4/3.0 + delta  \ingroup Config*/
+  addDoubleArrayOption("UMUSCL3_COEFF_FLOW", 3, Kappa_Umuscl3_Flow, default_umuscl3_coeff_flow);
+    
   /*!\brief CONV_NUM_METHOD_ADJFLOW
    *  \n DESCRIPTION: Convective numerical method for the adjoint solver.
    *  \n OPTIONS:  See \link Upwind_Map \endlink , \link Centered_Map \endlink. Note: not all methods are guaranteed to be implemented for the adjoint solver. \ingroup Config */
@@ -3097,13 +3101,19 @@ void CConfig::SetPostprocessing(unsigned short val_software, unsigned short val_
   if ((Kind_ConvNumScheme_AdjFlow == SPACE_CENTERED) && (Kind_Centered_AdjFlow == JST) && (SpatialOrder_AdjFlow == SECOND_ORDER_LIMITER))
     SpatialOrder_AdjFlow = SECOND_ORDER;
 
- /*--- Check for 3rd order w/ limiting for JST and correct ---*/
+ /*--- No 3rd UMUSCL scheme for JST ---*/
     
   if ((Kind_ConvNumScheme_Flow == SPACE_CENTERED) && (Kind_Centered_Flow == JST) && (SpatialOrder_Flow == THIRD_ORDER_UMUSCL_LIMITER))
-    SpatialOrder_Flow = THIRD_ORDER_UMUSCL;
-    
-  if ((Kind_ConvNumScheme_AdjFlow == SPACE_CENTERED) && (Kind_Centered_AdjFlow == JST) && (SpatialOrder_AdjFlow == THIRD_ORDER_UMUSCL_LIMITER))
-    SpatialOrder_AdjFlow = THIRD_ORDER_UMUSCL;
+  {
+      cout<< "3rd UMUSCL scheme not supported to space_centered scheme." << endl;
+      SpatialOrder_Flow = SECOND_ORDER;
+  }
+
+    if ((Kind_ConvNumScheme_Flow == SPACE_CENTERED) && (Kind_Centered_Flow == JST) && (SpatialOrder_Flow == THIRD_ORDER_UMUSCL))
+    {
+        cout<< "3rd UMUSCL scheme not supported to space_centered scheme." << endl;
+        SpatialOrder_Flow = SECOND_ORDER;
+    }
     
   delete [] tmp_smooth;
   
