@@ -1064,7 +1064,7 @@ void CConfig::SetConfig_Options(unsigned short val_iZone, unsigned short val_nZo
   addDoubleArrayOption("AD_COEFF_FLOW", 3, Kappa_Flow, default_ad_coeff_flow);
     
     default_umuscl3_coeff_flow[0]=-1.0/6; default_umuscl3_coeff_flow[1]=-4.0/3;  default_umuscl3_coeff_flow[2]=1.0e-10;
-    /*!\brief CONV_NUM_METHOD_ADJFLOW \n  DESCRIPTION: UMUSCL3 coefficients kappa=-1.0/6, kappa_3=-4/3.0 + delta  \ingroup Config*/
+    /*!\brief CONV_NUM_METHOD THIRD ORDER \n  DESCRIPTION: UMUSCL3 coefficients kappa=-1.0/6, kappa_3=-4/3.0 + delta  \ingroup Config*/
   addDoubleArrayOption("UMUSCL3_COEFF_FLOW", 3, Kappa_Umuscl3_Flow, default_umuscl3_coeff_flow);
     
   /*!\brief CONV_NUM_METHOD_ADJFLOW
