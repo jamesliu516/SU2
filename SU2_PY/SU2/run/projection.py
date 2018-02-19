@@ -3,20 +3,24 @@
 ## \file projection.py
 #  \brief python package for running gradient projection
 #  \author T. Lukaczyk, F. Palacios
-#  \version 5.0.0 "Raven"
+#  \version 6.0.0 "Falcon"
 #
-# SU2 Original Developers: Dr. Francisco D. Palacios.
-#                          Dr. Thomas D. Economon.
+# The current SU2 release has been coordinated by the
+# SU2 International Developers Society <www.su2devsociety.org>
+# with selected contributions from the open-source community.
 #
-# SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
-#                 Prof. Piero Colonna's group at Delft University of Technology.
-#                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
-#                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
-#                 Prof. Rafael Palacios' group at Imperial College London.
-#                 Prof. Edwin van der Weide's group at the University of Twente.
-#                 Prof. Vincent Terrapon's group at the University of Liege.
+# The main research teams contributing to the current release are:
+#  - Prof. Juan J. Alonso's group at Stanford University.
+#  - Prof. Piero Colonna's group at Delft University of Technology.
+#  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
+#  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
+#  - Prof. Rafael Palacios' group at Imperial College London.
+#  - Prof. Vincent Terrapon's group at the University of Liege.
+#  - Prof. Edwin van der Weide's group at the University of Twente.
+#  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
 #
-# Copyright (C) 2012-2017 SU2, the open-source CFD code.
+# Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+#                      Tim Albring, and the SU2 contributors.
 #
 # SU2 is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -39,7 +43,7 @@ import os, sys, shutil, copy
 
 from .. import io   as su2io
 from .. import util as su2util
-from interface import DOT as SU2_DOT
+from .interface import DOT as SU2_DOT
 
 
 # ----------------------------------------------------------------------
@@ -103,29 +107,7 @@ def projection( config, state={}, step = 1e-3 ):
     os.remove(grad_filename)
     
     info = su2io.State()
-     
-    if ('CUSTOM' in konfig.DV_KIND):
-        if ('OUTFLOW_GENERALIZED' in objective):
-            weight = 1.0
-            if (len(objective.split(','))>1):
-                obj = objective.split(',').index('OUTFLOW_GENERALIZED')
-                weight = float(konfig['OBJECTIVE_WEIGHT'].split(',')[obj])
-            import downstream_function # Must be defined in run folder
-            chaingrad = downstream_function.downstream_gradient(konfig,state,step)
-            n_dv = len(raw_gradients)
-            custom_dv=1
-            for idv in range(n_dv):
-                if (konfig.DV_KIND[idv] == 'CUSTOM'):
-                    raw_gradients[idv] = chaingrad[4+custom_dv]*weight
-                    custom_dv = custom_dv+1
-        else:
-            n_dv = len(raw_gradients)
-            custom_dv=1
-            for idv in range(n_dv):
-                if (konfig.DV_KIND[idv] == 'CUSTOM'):
-                    raw_gradients[idv] = 0.0
-                    custom_dv = custom_dv+1
-    
+       
     # Write Gradients
     data_plot = su2util.ordered_bunch()
     data_plot['VARIABLE']     = range(len(raw_gradients)) 

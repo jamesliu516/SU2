@@ -3,20 +3,24 @@
 ## \file config.py
 #  \brief python package for config 
 #  \author T. Lukaczyk, F. Palacios
-#  \version 5.0.0 "Raven"
+#  \version 6.0.0 "Falcon"
 #
-# SU2 Original Developers: Dr. Francisco D. Palacios.
-#                          Dr. Thomas D. Economon.
+# The current SU2 release has been coordinated by the
+# SU2 International Developers Society <www.su2devsociety.org>
+# with selected contributions from the open-source community.
 #
-# SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
-#                 Prof. Piero Colonna's group at Delft University of Technology.
-#                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
-#                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
-#                 Prof. Rafael Palacios' group at Imperial College London.
-#                 Prof. Edwin van der Weide's group at the University of Twente.
-#                 Prof. Vincent Terrapon's group at the University of Liege.
+# The main research teams contributing to the current release are:
+#  - Prof. Juan J. Alonso's group at Stanford University.
+#  - Prof. Piero Colonna's group at Delft University of Technology.
+#  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
+#  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
+#  - Prof. Rafael Palacios' group at Imperial College London.
+#  - Prof. Vincent Terrapon's group at the University of Liege.
+#  - Prof. Edwin van der Weide's group at the University of Twente.
+#  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
 #
-# Copyright (C) 2012-2017 SU2, the open-source CFD code.
+# Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+#                      Tim Albring, and the SU2 contributors.
 #
 # SU2 is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -37,14 +41,11 @@
 
 import os, sys, shutil, copy
 import numpy as np
-from ..util import bunch, ordered_bunch, switch
+from ..util import ordered_bunch, switch
 from .tools import *
-from config_options import *
+from .config_options import *
 
-try:
-    from collections import OrderedDict
-except ImportError:
-    from ..util.ordered_dict import OrderedDict
+from ..util.ordered_dict import OrderedDict
 
 inf = 1.0e20
 
@@ -86,7 +87,7 @@ class Config(ordered_bunch):
         if args and isinstance(args[0],str):
             filename = args[0]
             args = args[1:]
-        elif kwarg.has_key('filename'):
+        elif 'filename' in kwarg:
             filename = kwarg['filename']
             del kwarg['filename']
         else:
@@ -100,10 +101,10 @@ class Config(ordered_bunch):
             try:
                 self.read(filename)
             except IOError:
-                print 'Could not find config file: %s' % filename
-	    except:
-		print 'Unexpected error: ',sys.exc_info()[0]
-		raise
+                print('Could not find config file: %s' % filename)
+            except:
+                print('Unexpected error: ', sys.exc_info()[0])
+                raise
         
         self._filename = filename
     
@@ -127,13 +128,13 @@ class Config(ordered_bunch):
         try:
             return super(Config,self).__getattr__(k)
         except AttributeError:
-            raise AttributeError , 'Config parameter not found'
+            raise AttributeError('Config parameter not found')
         
     def __getitem__(self,k):
         try:
             return super(Config,self).__getitem__(k)
         except KeyError:
-            raise KeyError , 'Config parameter not found: %s' % k
+            raise KeyError('Config parameter not found: %s' % k)
 
     def unpack_dvs(self,dv_new,dv_old=None):
         """ updates config with design variable vectors
@@ -196,7 +197,7 @@ class Config(ordered_bunch):
     def local_files(self):
         """ removes path prefix from all *_FILENAME params
         """
-        for key,value in self.iteritems():
+        for key, value in self.items():
             if key.split('_')[-1] == 'FILENAME':
                 self[key] = os.path.basename(value)    
     
@@ -252,7 +253,7 @@ class Config(ordered_bunch):
         distance = 0.0
         
         for key in keys_check:
-            if konfig_diff.has_key(key):
+            if key in konfig_diff:
                 
                 val1 = konfig_diff[key][0]
                 val2 = konfig_diff[key][1]
@@ -264,7 +265,7 @@ class Config(ordered_bunch):
                     this_diff = np.sqrt( np.sum( (val1-val2)**2 ) )
                 
                 else:
-                    print 'Warning, unexpected config difference'
+                    print('Warning, unexpected config difference')
                     this_diff = inf
                     
                 distance += this_diff
@@ -280,7 +281,7 @@ class Config(ordered_bunch):
     
     def __str__(self):
         output = 'Config: %s' % self._filename
-        for k,v in self.iteritems():
+        for k,v in self.items():
             output +=  '\n    %s= %s' % (k,v)
         return output
 #: class Config
@@ -320,16 +321,16 @@ def read_config(filename):
         this_param = line[0].strip()
         this_value = line[1].strip()
         
-        assert not data_dict.has_key(this_param) , ('Config file has multiple specifications of %s' % this_param )
+        assert this_param not in data_dict, ('Config file has multiple specifications of %s' % this_param )
         for case in switch(this_param):
             
             # comma delimited lists of strings with or without paren's
-            if case("MARKER_EULER")      : pass
-            if case("MARKER_FAR")        : pass
-            if case("MARKER_PLOTTING")   : pass
-            if case("MARKER_MONITORING") : pass
-            if case("MARKER_SYM")        : pass
-            if case("DV_KIND")           : 
+            if case("MARKER_EULER")      or\
+               case("MARKER_FAR")        or\
+               case("MARKER_PLOTTING")   or\
+               case("MARKER_MONITORING") or\
+               case("MARKER_SYM")        or\
+               case("DV_KIND")           : 
                 # remove white space
                 this_value = ''.join(this_value.split())   
                 # remove parens
@@ -337,7 +338,7 @@ def read_config(filename):
                 # split by comma
                 data_dict[this_param] = this_value.split(",")
                 break
-            
+
             # semicolon delimited lists of comma delimited lists of floats
             if case("DV_PARAM"):
                 # remove white space
@@ -385,9 +386,9 @@ def read_config(filename):
                 break
             
             # comma delimited lists of floats
-            if case("DV_VALUE_OLD")    : pass
-            if case("DV_VALUE_NEW")    : pass
-            if case("DV_VALUE")        :           
+            if case("DV_VALUE_OLD")    or\
+               case("DV_VALUE_NEW")    or\
+               case("DV_VALUE")        :           
                 # remove white space
                 this_value = ''.join(this_value.split())                
                 # split by comma, map to float, store in dictionary
@@ -395,23 +396,23 @@ def read_config(filename):
                 break              
 
             # float parameters
-            if case("MACH_NUMBER")            : pass
-            if case("AoA")                    : pass
-            if case("FIN_DIFF_STEP")          : pass
-            if case("CFL_NUMBER")             : pass
-            if case("HB_PERIOD")    : pass
-            if case("WRT_SOL_FREQ")           :
+            if case("MACH_NUMBER")            or\
+               case("AOA")                    or\
+               case("FIN_DIFF_STEP")          or\
+               case("CFL_NUMBER")             or\
+               case("HB_PERIOD")              or\
+               case("WRT_SOL_FREQ")           :
                 data_dict[this_param] = float(this_value)
                 break   
             
             # int parameters
-            if case("NUMBER_PART")            : pass
-            if case("AVAILABLE_PROC")         : pass
-            if case("EXT_ITER")               : pass
-            if case("TIME_INSTANCES")         : pass
-            if case("UNST_ADJOINT_ITER")      : pass
-            if case("ITER_AVERAGE_OBJ")       : pass
-            if case("ADAPT_CYCLES")           :
+            if case("NUMBER_PART")            or\
+               case("AVAILABLE_PROC")         or\
+               case("EXT_ITER")               or\
+               case("TIME_INSTANCES")         or\
+               case("UNST_ADJOINT_ITER")      or\
+               case("ITER_AVERAGE_OBJ")       or\
+               case("ADAPT_CYCLES")           :
                 data_dict[this_param] = int(this_value)
                 break                
             
@@ -486,7 +487,7 @@ def read_config(filename):
             if case('OPT_OBJECTIVE'):
                 # remove white space
                 this_value = ''.join(this_value.split())
-                #split by + 
+                #split by ; 
                 this_def={}
                 this_value = this_value.split(";")
                 
@@ -497,7 +498,25 @@ def read_config(filename):
                     this_scale = 1.0
                     if len(this_obj) > 1:
                         this_scale = float( this_obj[1] )
-                    this_def.update({ this_name : {'SCALE':this_scale} })
+                    # check for penalty-based constraint function 
+                    for this_sgn in ['<','>','=']:
+                        if this_sgn in this_name: break
+                    this_obj = this_name.strip('()').split(this_sgn)
+                    if len(this_obj)>1:
+                        this_type = this_sgn
+                        this_val = this_obj[1]
+                    else:
+                        this_type = 'DEFAULT'
+                        this_val  = 0.0 
+                    this_name = this_obj[0]
+                       
+                    # Set up dict for objective, including scale, whether it is a penalty, and constraint value 
+                    this_def.update({ this_name : {'SCALE':this_scale, 'OBJTYPE':this_type, 'VALUE':this_val} })
+                    if (len(data_dict['MARKER_MONITORING'])>1):
+                        this_def[this_name]['MARKER'] = data_dict['MARKER_MONITORING'][len(this_def)-1]
+                    else:
+                        this_def[this_name]['MARKER'] = data_dict['MARKER_MONITORING'][0]
+
                 # save to output dictionary
                 data_dict[this_param] = this_def
                 break
@@ -541,7 +560,7 @@ def read_config(filename):
                 # sort constraints by type
                 this_sort = { 'EQUALITY'   : OrderedDict() ,
                               'INEQUALITY' : OrderedDict()  }
-                for key,value in this_def.iteritems():
+                for key,value in this_def.items():
                     if value['SIGN'] == '=':
                         this_sort['EQUALITY'][key]   = value
                     else:
@@ -564,24 +583,142 @@ def read_config(filename):
     #: for line
 
     #hack - twl
-    if not data_dict.has_key('DV_VALUE_NEW'):
+    if 'DV_VALUE_NEW' not in data_dict:
         data_dict['DV_VALUE_NEW'] = [0]
-    if not data_dict.has_key('DV_VALUE_OLD'):
+    if 'DV_VALUE_OLD' not in data_dict:
         data_dict['DV_VALUE_OLD'] = [0]
-    if not data_dict.has_key('OPT_ITERATIONS'):
+    if 'OPT_ITERATIONS' not in data_dict:
         data_dict['OPT_ITERATIONS'] = 100
-    if not data_dict.has_key('OPT_ACCURACY'):
+    if 'OPT_ACCURACY' not in data_dict:
         data_dict['OPT_ACCURACY'] = 1e-10
-    if not data_dict.has_key('OPT_BOUND_UPPER'):
+    if 'OPT_RELAX_FACTOR' not in data_dict:
+        data_dict['OPT_RELAX_FACTOR'] = 1.0
+    if 'OPT_GRADIENT_FACTOR' not in data_dict:
+        data_dict['OPT_GRADIENT_FACTOR'] = 1.0
+    if 'OPT_BOUND_UPPER' not in data_dict:
         data_dict['OPT_BOUND_UPPER'] = 1e10
-    if not data_dict.has_key('OPT_BOUND_LOWER'):
+    if 'OPT_BOUND_LOWER' not in data_dict:
         data_dict['OPT_BOUND_LOWER'] = -1e10
-    if not data_dict.has_key('OPT_COMBINE_OBJECTIVE'):
+    if 'OPT_COMBINE_OBJECTIVE' not in data_dict:
         data_dict['OPT_COMBINE_OBJECTIVE'] = "NO"
-    if not data_dict.has_key('VALUE_OBJFUNC_FILENAME'):
-      data_dict['VALUE_OBJFUNC_FILENAME'] = 'of_eval.dat'
-    if not data_dict.has_key('GRAD_OBJFUNC_FILENAME'):
-      data_dict['GRAD_OBJFUNC_FILENAME'] = 'of_grad.dat'
+    # ensure that per-surface output will be included when there are multiple objectives
+    if 'WRT_SURFACE' not in data_dict and 'OPT_OBJECTIVE' in data_dict and len(data_dict['OPT_OBJECTIVE'])>1:
+        data_dict['WRT_SURFACE'] = "YES"
+    if 'OPT_CONSTRAINT' not in data_dict:
+        data_dict['OPT_CONSTRAINT'] =  {'INEQUALITY': OrderedDict(), 'EQUALITY': OrderedDict()}
+    if 'VALUE_OBJFUNC_FILENAME' not in data_dict:
+        data_dict['VALUE_OBJFUNC_FILENAME'] = 'of_eval.dat'
+    if 'GRAD_OBJFUNC_FILENAME' not in data_dict:
+        data_dict['GRAD_OBJFUNC_FILENAME'] = 'of_grad.dat'
+    if 'AOA' not in data_dict:
+        data_dict['AOA'] = 0.0
+    if 'SIDESLIP_ANGLE' not in data_dict:
+        data_dict['SIDESLIP_ANGLE'] = 0.0
+    if 'MACH_NUMBER' not in data_dict:
+        data_dict['MACH_NUMBER'] = 0.0
+    if 'REYNOLDS_NUMBER' not in data_dict:
+        data_dict['REYNOLDS_NUMBER'] = 0.0
+    if 'TARGET_CL' not in data_dict:
+        data_dict['TARGET_CL'] = 0.0
+    if 'FREESTREAM_PRESSURE' not in data_dict:
+        data_dict['FREESTREAM_PRESSURE'] = 101325.0
+    if 'FREESTREAM_TEMPERATURE' not in data_dict:
+        data_dict['FREESTREAM_TEMPERATURE'] = 288.15
+
+    #
+    # Multipoints requires some particular default values
+    #
+    multipoints = 1
+    if 'MULTIPOINT_WEIGHT' not in data_dict:
+      data_dict['MULTIPOINT_WEIGHT'] = "(1.0)"
+      multipoints = 1
+    else:
+      multipoints = len(data_dict['MULTIPOINT_WEIGHT'].replace("(", "").replace(")", "").split(','))
+
+    if 'MULTIPOINT_MACH_NUMBER' not in data_dict:
+      Mach_Value = data_dict['MACH_NUMBER']
+      Mach_List = "("
+      for i in range(multipoints):
+        if i != 0: Mach_List +=  ", "
+        Mach_List +=  str(Mach_Value)
+      Mach_List += ")"
+      data_dict['MULTIPOINT_MACH_NUMBER'] = Mach_List
+      
+    if 'MULTIPOINT_AOA' not in data_dict:
+      Alpha_Value = data_dict['AOA']
+      Alpha_List = "("
+      for i in range(multipoints):
+        if i != 0: Alpha_List +=  ", "
+        Alpha_List +=  str(Alpha_Value)
+      Alpha_List += ")"
+      data_dict['MULTIPOINT_AOA'] = Alpha_List
+
+    if 'MULTIPOINT_SIDESLIP_ANGLE' not in data_dict:
+      Beta_Value = data_dict['SIDESLIP_ANGLE']
+      Beta_List = "("
+      for i in range(multipoints):
+        if i != 0: Beta_List +=  ", "
+        Beta_List +=  str(Beta_Value)
+      Beta_List += ")"
+      data_dict['MULTIPOINT_SIDESLIP_ANGLE'] = Beta_List
+      
+    if 'MULTIPOINT_REYNOLDS_NUMBER' not in data_dict:
+      Reynolds_Value = data_dict['REYNOLDS_NUMBER']
+      Reynolds_List = "("
+      for i in range(multipoints):
+        if i != 0: Reynolds_List +=  ", "
+        Reynolds_List +=  str(Reynolds_Value)
+      Reynolds_List += ")"
+      data_dict['MULTIPOINT_REYNOLDS_NUMBER'] = Reynolds_List
+
+    if 'MULTIPOINT_TARGET_CL' not in data_dict:
+      TargetCLValue = data_dict['TARGET_CL']
+      TargetCL_List = "("
+      for i in range(multipoints):
+        if i != 0: TargetCL_List +=  ", "
+        TargetCL_List +=  str(TargetCLValue)
+      TargetCL_List += ")"
+      data_dict['MULTIPOINT_TARGET_CL'] = TargetCL_List
+
+    if 'MULTIPOINT_FREESTREAM_PRESSURE' not in data_dict:
+      Pressure_Value = data_dict['FREESTREAM_PRESSURE']
+      Pressure_List = "("
+      for i in range(multipoints):
+        if i != 0: Pressure_List +=  ", "
+        Pressure_List +=  str(Pressure_Value)
+      Pressure_List += ")"
+      data_dict['MULTIPOINT_FREESTREAM_PRESSURE'] = Pressure_List
+
+    if 'MULTIPOINT_FREESTREAM_TEMPERATURE' not in data_dict:
+      Temperature_Value = data_dict['FREESTREAM_TEMPERATURE']
+      Temperature_List = "("
+      for i in range(multipoints):
+        if i != 0: Temperature_List +=  ", "
+        Temperature_List +=  str(Temperature_Value)
+      Temperature_List += ")"
+      data_dict['MULTIPOINT_FREESTREAM_TEMPERATURE'] = Temperature_List
+
+    #
+    # Default values for optimization parameters (needed for some eval functions
+    # that can be called outside of an opt. context.
+    #
+    if 'OBJECTIVE_FUNCTION' not in data_dict:
+        data_dict['OBJECTIVE_FUNCTION']='DRAG'
+    if 'DV_KIND' not in data_dict:
+        data_dict['DV_KIND']=['FFD_SETTING']
+    if 'DV_PARAM' not in data_dict:
+        data_dict['DV_PARAM']={'FFDTAG': ['1'], 'PARAM': [[0.0, 0.5]], 'SIZE': [1]}
+    if 'DEFINITION_DV' not in data_dict:
+        data_dict['DEFINITION_DV']={'FFDTAG': [[]],
+            'KIND': ['HICKS_HENNE'],
+            'MARKER': [['WING']],
+            'PARAM': [[0.0, 0.05]],
+            'SCALE': [1.0],
+            'SIZE': [1]}
+    if 'VALUE_OBJFUNC_FILENAME' not in data_dict:
+        data_dict['VALUE_OBJFUNC_FILENAME'] = 'of_eval.dat'
+    if 'GRAD_OBJFUNC_FILENAME' not in data_dict:
+        data_dict['GRAD_OBJFUNC_FILENAME'] = 'of_grad.dat'
  
     return data_dict
     
@@ -618,7 +755,7 @@ def write_config(filename,param_dict):
         old_value  = line[1].strip()
         
         # skip if parameter unwanted
-        if not param_dict.has_key(this_param):
+        if this_param not in param_dict:
             output_file.write(raw_line)
             continue
         
@@ -753,18 +890,22 @@ def write_config(filename,param_dict):
                 break
             
             if case("OPT_OBJECTIVE"):
-                i_name = 0
-                for name,value in new_value.iteritems():
-                    if i_name>0: output_file.write("; ")
-                    output_file.write( "%s * %s" % (name,value['SCALE']) )
-                    i_name += 1
+                n_obj = 0
+                for name,value in new_value.items():
+                    if n_obj>0: output_file.write("; ")
+                    if value['OBJTYPE']=='DEFAULT':
+                        output_file.write( "%s * %s " % (name,value['SCALE']) )
+                    else:
+                        output_file.write( "( %s %s %s ) * %s" 
+                                           % (name, value['OBJTYPE'], value['VALUE'], value['SCALE']) )
+                    n_obj += 1
                 break
             
             if case("OPT_CONSTRAINT"):
                 i_con = 0
                 for con_type in ['EQUALITY','INEQUALITY']:
                     this_con = new_value[con_type]
-                    for name,value in this_con.iteritems():
+                    for name,value in this_con.items():
                         if i_con>0: output_file.write("; ")
                         output_file.write( "( %s %s %s ) * %s" 
                                           % (name, value['SIGN'], value['VALUE'], value['SCALE']) ) 
@@ -792,10 +933,10 @@ def write_config(filename,param_dict):
     # check that all params were used
     for this_param in param_dict.keys():
         if not this_param in ['JOB_NUMBER']:
-            print ( 'Warning: Parameter %s not found in config file and was not written' % (this_param) )
+            print('Warning: Parameter %s not found in config file and was not written' % (this_param))
         
     output_file.close()
-    os.remove( temp_filename )
+    os.remove(temp_filename)
     
 #: def write_config()
 
@@ -806,7 +947,7 @@ def dump_config(filename,config):
     '''
     
     # HACK - twl
-    if config.has_key('DV_VALUE_NEW'):
+    if 'DV_VALUE_NEW' in config:
         config.DV_VALUE = config.DV_VALUE_NEW
         
     config_file = open(filename,'w')

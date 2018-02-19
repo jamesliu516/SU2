@@ -2,20 +2,24 @@
  * \file variable_direct_mean_inc.cpp
  * \brief Definition of the variable classes for incompressible flow.
  * \author F. Palacios, T. Economon
- * \version 5.0.0 "Raven"
+ * \version 6.0.0 "Falcon"
  *
- * SU2 Original Developers: Dr. Francisco D. Palacios.
- *                          Dr. Thomas D. Economon.
+ * The current SU2 release has been coordinated by the
+ * SU2 International Developers Society <www.su2devsociety.org>
+ * with selected contributions from the open-source community.
  *
- * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
- *                 Prof. Piero Colonna's group at Delft University of Technology.
- *                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
- *                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
- *                 Prof. Rafael Palacios' group at Imperial College London.
- *                 Prof. Edwin van der Weide's group at the University of Twente.
- *                 Prof. Vincent Terrapon's group at the University of Liege.
+ * The main research teams contributing to the current release are:
+ *  - Prof. Juan J. Alonso's group at Stanford University.
+ *  - Prof. Piero Colonna's group at Delft University of Technology.
+ *  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
+ *  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
+ *  - Prof. Rafael Palacios' group at Imperial College London.
+ *  - Prof. Vincent Terrapon's group at the University of Liege.
+ *  - Prof. Edwin van der Weide's group at the University of Twente.
+ *  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
  *
- * Copyright (C) 2012-2017 SU2, the open-source CFD code.
+ * Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+ *                      Tim Albring, and the SU2 contributors.
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -60,7 +64,6 @@ CIncEulerVariable::CIncEulerVariable(su2double val_pressure, su2double *val_velo
                                unsigned short val_nvar, CConfig *config) : CVariable(val_nDim, val_nvar, config) {
   unsigned short iVar, iDim, iMesh, nMGSmooth = 0;
   
-  bool low_fidelity = config->GetLowFidelitySim();
   bool dual_time = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
                     (config->GetUnsteady_Simulation() == DT_STEPPING_2ND));
   bool windgust = config->GetWind_Gust();
@@ -101,7 +104,7 @@ CIncEulerVariable::CIncEulerVariable(su2double val_pressure, su2double *val_velo
   for (iMesh = 0; iMesh <= config->GetnMGLevels(); iMesh++)
     nMGSmooth += config->GetMG_CorrecSmooth(iMesh);
   
-  if ((nMGSmooth > 0) || low_fidelity) {
+  if (nMGSmooth > 0) {
     Residual_Sum = new su2double [nVar];
     Residual_Old = new su2double [nVar];
   }
@@ -114,7 +117,7 @@ CIncEulerVariable::CIncEulerVariable(su2double val_pressure, su2double *val_velo
   
   /*--- Always allocate the slope limiter,
    and the auxiliar variables (check the logic - JST with 2nd order Turb model - ) ---*/
-  
+
   Limiter_Primitive = new su2double [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++)
     Limiter_Primitive[iVar] = 0.0;
@@ -164,7 +167,7 @@ CIncEulerVariable::CIncEulerVariable(su2double val_pressure, su2double *val_velo
   for (iVar = 0; iVar < nPrimVar; iVar++) Primitive[iVar] = 0.0;
 
   /*--- Incompressible flow, gradients primitive variables nDim+2, (P, vx, vy, vz, rho)
-   * We need P, and rho for running the adjoint problem ---*/
+        We need P, and rho for running the adjoint problem ---*/
   
   Gradient_Primitive = new su2double* [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++) {
@@ -177,7 +180,6 @@ CIncEulerVariable::CIncEulerVariable(su2double val_pressure, su2double *val_velo
 CIncEulerVariable::CIncEulerVariable(su2double *val_solution, unsigned short val_nDim, unsigned short val_nvar, CConfig *config) : CVariable(val_nDim, val_nvar, config) {
   unsigned short iVar, iDim, iMesh, nMGSmooth = 0;
   
-  bool low_fidelity = config->GetLowFidelitySim();
   bool dual_time = ((config->GetUnsteady_Simulation() == DT_STEPPING_1ST) ||
                     (config->GetUnsteady_Simulation() == DT_STEPPING_2ND));
   bool windgust = config->GetWind_Gust();
@@ -215,7 +217,7 @@ CIncEulerVariable::CIncEulerVariable(su2double *val_solution, unsigned short val
   for (iMesh = 0; iMesh <= config->GetnMGLevels(); iMesh++)
     nMGSmooth += config->GetMG_CorrecSmooth(iMesh);
   
-  if ((nMGSmooth > 0) || low_fidelity) {
+  if (nMGSmooth > 0) {
     Residual_Sum = new su2double [nVar];
     Residual_Old = new su2double [nVar];
   }
@@ -226,6 +228,7 @@ CIncEulerVariable::CIncEulerVariable(su2double *val_solution, unsigned short val
   
   /*--- Always allocate the slope limiter,
    and the auxiliar variables (check the logic - JST with 2nd order Turb model - ) ---*/
+  
   Limiter_Primitive = new su2double [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++)
     Limiter_Primitive[iVar] = 0.0;
@@ -242,12 +245,14 @@ CIncEulerVariable::CIncEulerVariable(su2double *val_solution, unsigned short val
   }
   
   /*--- Solution initialization ---*/
+  
   for (iVar = 0; iVar < nVar; iVar++) {
     Solution[iVar] = val_solution[iVar];
     Solution_Old[iVar] = val_solution[iVar];
   }
   
   /*--- Allocate and initializate solution for dual time strategy ---*/
+  
   if (dual_time) {
     Solution_time_n = new su2double [nVar];
     Solution_time_n1 = new su2double [nVar];
@@ -260,17 +265,20 @@ CIncEulerVariable::CIncEulerVariable(su2double *val_solution, unsigned short val
   
     
   /*--- Allocate vector for wind gust and wind gust derivative field ---*/
+  
   if (windgust) {
     WindGust = new su2double [nDim];
     WindGustDer = new su2double [nDim+1];
   }
   
   /*--- Incompressible flow, primitive variables nDim+3, (P, vx, vy, vz, rho, beta) ---*/
+  
   Primitive = new su2double [nPrimVar];
   for (iVar = 0; iVar < nPrimVar; iVar++) Primitive[iVar] = 0.0;
 
   /*--- Incompressible flow, gradients primitive variables nDim+2, (P, vx, vy, vz, rho),
         We need P, and rho for running the adjoint problem ---*/
+  
   Gradient_Primitive = new su2double* [nPrimVarGrad];
   for (iVar = 0; iVar < nPrimVarGrad; iVar++) {
     Gradient_Primitive[iVar] = new su2double [nDim];
@@ -355,6 +363,8 @@ CIncNSVariable::CIncNSVariable(su2double val_pressure, su2double *val_velocity,
   Prandtl_Lam     = config->GetPrandtl_Lam();
   Prandtl_Turb    = config->GetPrandtl_Turb();
   
+  DES_LengthScale = 0.0;
+  
 }
 
 CIncNSVariable::CIncNSVariable(su2double *val_solution, unsigned short val_nDim,
@@ -365,11 +375,14 @@ CIncNSVariable::CIncNSVariable(su2double *val_solution, unsigned short val_nDim,
   Viscosity_Inf   = config->GetViscosity_FreeStreamND();
   Prandtl_Lam     = config->GetPrandtl_Lam();
   Prandtl_Turb    = config->GetPrandtl_Turb();
+  
+  DES_LengthScale = 0.0;
+  
 }
 
 CIncNSVariable::~CIncNSVariable(void) { }
 
-bool CIncNSVariable::SetVorticity(bool val_limiter) {
+bool CIncNSVariable::SetVorticity(void) {
   
   Vorticity[0] = 0.0; Vorticity[1] = 0.0;
   
@@ -384,7 +397,7 @@ bool CIncNSVariable::SetVorticity(bool val_limiter) {
   
 }
 
-bool CIncNSVariable::SetStrainMag(bool val_limiter) {
+bool CIncNSVariable::SetStrainMag(void) {
   
   su2double Div;
   unsigned short iDim;

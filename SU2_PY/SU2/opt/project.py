@@ -3,20 +3,24 @@
 ## \file project.py
 #  \brief package for optimization projects
 #  \author T. Lukaczyk, F. Palacios
-#  \version 5.0.0 "Raven"
+#  \version 6.0.0 "Falcon"
 #
-# SU2 Original Developers: Dr. Francisco D. Palacios.
-#                          Dr. Thomas D. Economon.
+# The current SU2 release has been coordinated by the
+# SU2 International Developers Society <www.su2devsociety.org>
+# with selected contributions from the open-source community.
 #
-# SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
-#                 Prof. Piero Colonna's group at Delft University of Technology.
-#                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
-#                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
-#                 Prof. Rafael Palacios' group at Imperial College London.
-#                 Prof. Edwin van der Weide's group at the University of Twente.
-#                 Prof. Vincent Terrapon's group at the University of Liege.
+# The main research teams contributing to the current release are:
+#  - Prof. Juan J. Alonso's group at Stanford University.
+#  - Prof. Piero Colonna's group at Delft University of Technology.
+#  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
+#  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
+#  - Prof. Rafael Palacios' group at Imperial College London.
+#  - Prof. Vincent Terrapon's group at the University of Liege.
+#  - Prof. Edwin van der Weide's group at the University of Twente.
+#  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
 #
-# Copyright (C) 2012-2017 SU2, the open-source CFD code.
+# Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+#                      Tim Albring, and the SU2 contributors.
 #
 # SU2 is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -30,6 +34,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with SU2. If not, see <http://www.gnu.org/licenses/>.
+
+# make print(*args) function available in PY2.6+, does'nt work on PY < 2.6
+from __future__ import print_function
 
 # -------------------------------------------------------------------
 #  Imports
@@ -106,10 +113,25 @@ class Project(object):
         if '*' in folder: folder = su2io.next_folder(folder)        
         if designs is None: designs = []
         
-        print 'New Project: %s' % (folder)
+        print('New Project: %s' % (folder))
         
         # setup config
         config = copy.deepcopy(config)
+        
+        # data_dict creation does not preserve the ordering of the config file.
+        # This section ensures that the order of markers and objectives match 
+        # It is only needed when more than one objective is used.
+        def_objs = config['OPT_OBJECTIVE']
+        if len(def_objs)>1:
+            objectives = def_objs.keys()
+            marker_monitoring = []
+            weights = []
+            for i_obj, this_obj in enumerate(objectives):
+                marker_monitoring+=[def_objs[this_obj]['MARKER']]
+                weights+=[str(def_objs[this_obj]['SCALE'])]
+            config['MARKER_MONITORING'] = marker_monitoring
+            config['OBJECTIVE_WEIGHT'] = ",".join(weights)
+            config['OBJECTIVE_FUNCTION'] = ",".join(objectives)
         
         # setup state
         if state is None:
@@ -118,10 +140,9 @@ class Project(object):
             state  = copy.deepcopy(state)
             state  = su2io.State(state)
         state.find_files(config)
-        if 'OUTFLOW_GENERALIZED' in config.OPT_OBJECTIVE:
-            state.FILES['DownstreamFunction'] = 'downstream_function.py'
+
         if 'MESH' not in state.FILES:
-            raise Exception , 'Could not find mesh file: %s' % config.MESH_FILENAME
+            raise Exception('Could not find mesh file: %s' % config.MESH_FILENAME)
         
         self.config  = config      # base config
         self.state   = state       # base state
@@ -177,7 +198,7 @@ class Project(object):
             design = self.new_design(konfig)
             
             if config.get('CONSOLE','VERBOSE') == 'VERBOSE':
-                print os.path.join(self.folder,design.folder)
+                print(os.path.join(self.folder,design.folder))
             timestamp = design.state.tic()
             
             # run design+
@@ -266,7 +287,6 @@ class Project(object):
         """
          # local konfig
         konfig = copy.deepcopy(config)
-        
         # find closest design
         closest,delta = self.closest_design(konfig)
         # found existing design
@@ -285,7 +305,7 @@ class Project(object):
         if delta == 0.0 and closest:
             design = closest
         else:
-            raise Exception, 'design not found for this config'
+            raise Exception('design not found for this config')
         return design
         
     def closest_design(self,config):
@@ -389,7 +409,7 @@ class Project(object):
             for key in design.state.GRADIENTS.keys():
                 results.GRADIENTS[key] = []
             for TYPE in design.state.HISTORY.keys():
-                if not results.HISTORY.has_key(TYPE):
+                if not TYPE in results.HISTORY:
                     results.HISTORY[TYPE] = su2util.ordered_bunch()
                 for key in design.state.HISTORY[TYPE].keys():
                     results.HISTORY[TYPE][key] = []
@@ -408,13 +428,13 @@ class Project(object):
             this_designvector = design.state.design_vector()
             results.VARIABLES.append( this_designvector )
             for key in results.FUNCTIONS.keys():
-                if design.state.FUNCTIONS.has_key(key):
+                if key in design.state.FUNCTIONS:
                     new_func = design.state.FUNCTIONS[key]
                 else:
                     new_func = default
                 results.FUNCTIONS[key].append(new_func)
             for key in results.GRADIENTS.keys():
-                if design.state.GRADIENTS.has_key(key):
+                if key in design.state.GRADIENTS:
                     new_grad = design.state.GRADIENTS[key]
                 else:
                     new_grad = [default] * len( this_designvector )

@@ -2,20 +2,24 @@
  * \file solution_adjoint_turbulent.cpp
  * \brief Main subrotuines for solving adjoint problems (Euler, Navier-Stokes, etc.).
  * \author F. Palacios, A. Bueno, T. Economon
- * \version 5.0.0 "Raven"
+ * \version 6.0.0 "Falcon"
  *
- * SU2 Original Developers: Dr. Francisco D. Palacios.
- *                          Dr. Thomas D. Economon.
+ * The current SU2 release has been coordinated by the
+ * SU2 International Developers Society <www.su2devsociety.org>
+ * with selected contributions from the open-source community.
  *
- * SU2 Developers: Prof. Juan J. Alonso's group at Stanford University.
- *                 Prof. Piero Colonna's group at Delft University of Technology.
- *                 Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
- *                 Prof. Alberto Guardone's group at Polytechnic University of Milan.
- *                 Prof. Rafael Palacios' group at Imperial College London.
- *                 Prof. Edwin van der Weide's group at the University of Twente.
- *                 Prof. Vincent Terrapon's group at the University of Liege.
+ * The main research teams contributing to the current release are:
+ *  - Prof. Juan J. Alonso's group at Stanford University.
+ *  - Prof. Piero Colonna's group at Delft University of Technology.
+ *  - Prof. Nicolas R. Gauger's group at Kaiserslautern University of Technology.
+ *  - Prof. Alberto Guardone's group at Polytechnic University of Milan.
+ *  - Prof. Rafael Palacios' group at Imperial College London.
+ *  - Prof. Vincent Terrapon's group at the University of Liege.
+ *  - Prof. Edwin van der Weide's group at the University of Twente.
+ *  - Lab. of New Concepts in Aeronautics at Tech. Institute of Aeronautics.
  *
- * Copyright (C) 2012-2017 SU2, the open-source CFD code.
+ * Copyright 2012-2018, Francisco D. Palacios, Thomas D. Economon,
+ *                      Tim Albring, and the SU2 contributors.
  *
  * SU2 is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -38,12 +42,7 @@ CAdjTurbSolver::CAdjTurbSolver(void) : CSolver() {}
 CAdjTurbSolver::CAdjTurbSolver(CGeometry *geometry, CConfig *config, unsigned short iMesh) : CSolver() {
   unsigned long iPoint;
   unsigned short iDim, iVar, nLineLets;
-  
-  int rank = MASTER_NODE;
-#ifdef HAVE_MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  
+
   nDim = geometry->GetnDim();
   Gamma = config->GetGamma();
   Gamma_Minus_One = Gamma - 1.0;
@@ -142,20 +141,7 @@ CAdjTurbSolver::CAdjTurbSolver(CGeometry *geometry, CConfig *config, unsigned sh
     
     /*--- In case there is no file ---*/
     if (restart_file.fail()) {
-      if (rank == MASTER_NODE)
-        cout << "There is no adjoint restart file!! " << filename.data() << "."<< endl;
-      exit(EXIT_FAILURE);
-    }
-    
-    /*--- In case this is a parallel simulation, we need to perform the
-     Global2Local index transformation first. ---*/
-    
-    map<unsigned long,unsigned long> Global2Local;
-    map<unsigned long,unsigned long>::const_iterator MI;
-    
-    /*--- Now fill array with the transform values only for local points ---*/
-    for (iPoint = 0; iPoint < nPointDomain; iPoint++) {
-      Global2Local[geometry->node[iPoint]->GetGlobalIndex()] = iPoint;
+      SU2_MPI::Error(string("There is no adjoint restart file ") + filename, CURRENT_FUNCTION);
     }
     
     /*--- Read all lines in the restart file ---*/
@@ -174,11 +160,10 @@ CAdjTurbSolver::CAdjTurbSolver(CGeometry *geometry, CConfig *config, unsigned sh
 
       /*--- Retrieve local index. If this node from the restart file lives
        on the current processor, we will load and instantiate the vars. ---*/
-      
-      MI = Global2Local.find(iPoint_Global);
-      if (MI != Global2Local.end()) {
-        
-        iPoint_Local = Global2Local[iPoint_Global];
+
+      iPoint_Local = geometry->GetGlobal_to_Local_Point(iPoint_Global);
+
+      if (iPoint_Local > -1) {
         
         if (nDim == 2) point_line >> index >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> Solution[0];
         if (nDim == 3) point_line >> index >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> dull_val >> Solution[0];
@@ -198,17 +183,8 @@ CAdjTurbSolver::CAdjTurbSolver(CGeometry *geometry, CConfig *config, unsigned sh
     SU2_MPI::Allreduce(&sbuf_NotMatching, &rbuf_NotMatching, 1, MPI_UNSIGNED_SHORT, MPI_SUM, MPI_COMM_WORLD);
 #endif
     if (rbuf_NotMatching != 0) {
-      if (rank == MASTER_NODE) {
-        cout << endl << "The solution file " << filename.data() << " doesn't match with the mesh file!" << endl;
-        cout << "It could be empty lines at the end of the file." << endl << endl;
-      }
-#ifndef HAVE_MPI
-      exit(EXIT_FAILURE);
-#else
-      MPI_Barrier(MPI_COMM_WORLD);
-      MPI_Abort(MPI_COMM_WORLD,1);
-      MPI_Finalize();
-#endif
+        SU2_MPI::Error(string("The solution file ") + filename + string(" doesn't match with the mesh file!\n") +
+                       string("It could be empty lines at the end of the file."), CURRENT_FUNCTION);
     }
     
     /*--- Instantiate the variable class with an arbitrary solution
@@ -238,7 +214,7 @@ void CAdjTurbSolver::Set_MPI_Solution(CGeometry *geometry, CConfig *config) {
   
 #ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
+  SU2_MPI::Status status;
 #endif
   
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
@@ -313,7 +289,7 @@ void CAdjTurbSolver::Set_MPI_Solution_Old(CGeometry *geometry, CConfig *config) 
   
 #ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
+  SU2_MPI::Status status;
 #endif
   
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
@@ -393,7 +369,7 @@ void CAdjTurbSolver::Set_MPI_Solution_Gradient(CGeometry *geometry, CConfig *con
   
 #ifdef HAVE_MPI
   int send_to, receive_from;
-  MPI_Status status;
+  SU2_MPI::Status status;
 #endif
   
   for (iMarker = 0; iMarker < config->GetnMarker_All(); iMarker++) {
@@ -609,10 +585,10 @@ void CAdjTurbSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_conta
 //  su2double *Limiter_i = NULL, *Limiter_j = NULL, **Gradient_i, **Gradient_j, Project_Grad_i, Project_Grad_j;
 //  unsigned short iDim, iVar;
   
-  bool second_order  = ((config->GetSpatialOrder() == SECOND_ORDER) || (config->GetSpatialOrder() == SECOND_ORDER_LIMITER));
-  bool limiter       = (config->GetSpatialOrder() == SECOND_ORDER_LIMITER);
+  bool muscl   = config->GetMUSCL_AdjTurb();
+  bool limiter = (config->GetKind_SlopeLimit_AdjTurb() != NO_LIMITER);
   
-  if (second_order) {
+  if (muscl) {
     if (config->GetKind_Gradient_Method() == GREEN_GAUSS) SetSolution_Gradient_GG(geometry, config);
     if (config->GetKind_Gradient_Method() == WEIGHTED_LEAST_SQUARES) SetSolution_Gradient_LS(geometry, config);
     if (limiter) SetSolution_Limiter(geometry, config);
@@ -642,7 +618,7 @@ void CAdjTurbSolver::Upwind_Residual(CGeometry *geometry, CSolver **solver_conta
     TurbVar_Grad_j = solver_container[TURB_SOL]->node[jPoint]->GetGradient();
     numerics->SetTurbVarGradient(TurbVar_Grad_i, TurbVar_Grad_j);
     
-//    if (second_order) {
+//    if (muscl) {
 //      
 //      /*--- Conservative solution using gradient reconstruction ---*/
 //      for (iDim = 0; iDim < nDim; iDim++) {
