@@ -40,7 +40,6 @@
 using namespace std;
 
 int main(int argc, char *argv[]) {
-	/* test the git */
   
   unsigned short nZone, nDim;
   char config_file_name[MAX_STRING_SIZE];
